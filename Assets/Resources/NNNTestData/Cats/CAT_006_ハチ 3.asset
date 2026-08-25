@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: "CAT_006_\u30CF\u30C1 3"
+  m_EditorClassIdentifier: Assembly-CSharp:NNN:CatDefinition
+  Id: CAT_006
+  DisplayName: "\u30CF\u30C1"
+  Age: 2
+  Activity: 80
+  Sociability: 35
+  Independence: 60
+  Adaptability: 45
+  Traits:
+  - {fileID: 11400000, guid: 643ca6e3476d13c47b57ad53918d48e8, type: 2}
+  - {fileID: 11400000, guid: a70635fee70d89440b893e22af438f5d, type: 2}
+  - {fileID: 11400000, guid: 3eb991cc053a2994fa2e14f1e7c8dbb5, type: 2}

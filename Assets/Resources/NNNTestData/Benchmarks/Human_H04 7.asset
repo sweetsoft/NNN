@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: Human_H04 7
+  m_EditorClassIdentifier: Assembly-CSharp:NNN:HumanArchetype
+  Id: h04_human
+  DisplayName: "\u5728\u5B85\u30FB\u5BC2\u3057\u304C\u308A\u30FB\u63A5\u89E6\u591A"
+  Description: "\u5728\u5B85\u30FB\u5BC2\u3057\u304C\u308A\u30FB\u63A5\u89E6\u591A"
+  MinAge: 25
+  MaxAge: 25
+  PreferredTraits:
+  - {fileID: 11400000, guid: e78d1d5f9e8dda0408cdf0c79e66188f, type: 2}
+  - {fileID: 11400000, guid: e1645fce98056194486254b5b29bbc12, type: 2}
+  - {fileID: 11400000, guid: 1a31d56893f55b14e999e17861099c19, type: 2}
+  - {fileID: 11400000, guid: cdf10ead8de945442bd5d8b3e96b9016, type: 2}
