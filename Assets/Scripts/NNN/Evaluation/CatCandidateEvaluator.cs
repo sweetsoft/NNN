@@ -146,6 +146,13 @@ namespace NNN
                 e.StableScore += 5f;
             }
 
+            // 猫経験あり×脱走傾向への対応力
+            if (HasHumanTrait(target, "cat_experienced") && cat.HasTrait("escape"))
+            {
+                e.StableScore += 10f;
+                e.Reasons.Add("+ Stable: 猫経験あり×脱走傾向への対応力 +10");
+            }
+
             e.StableScore = Clamp(e.StableScore);
             e.SlowBuildScore = Clamp(e.SlowBuildScore);
             e.TransformativeScore = Clamp(e.TransformativeScore);
