@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -128,6 +128,25 @@ namespace NNN
             {
                 e.StableScore += 20f;
                 e.Reasons.Add("+ Stable: 活動的な生活×高Activity +20");
+            }
+
+
+            // 1. 猫経験者 × 脱走傾向
+            if (HasHumanTrait(target, "猫経験あり") && cat.HasTrait("脱走傾向"))
+            {
+                e.Risk -= 10f;
+            }
+
+            // 2. 活動的な人 × 活発な猫
+            if (HasHumanTrait(target, "活動的") && cat.HasTrait("活発"))
+            {
+                e.StableScore += 10f;
+            }
+
+            // 3. 広い住居 × 高Activity猫
+            if (residence.Space >= 70f && cat.Activity >= 80f)
+            {
+                e.StableScore += 5f;
             }
 
             e.StableScore = Clamp(e.StableScore);
