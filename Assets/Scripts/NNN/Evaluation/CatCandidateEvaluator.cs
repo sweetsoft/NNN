@@ -102,6 +102,14 @@ namespace NNN
                 e.Reasons.Add("- 脱走傾向×EscapeRisk");
             }
             if (cat.HasTrait("timid")) { e.Risk += 8f; e.Reasons.Add("- 臆病さによる初期負荷"); }
+
+
+            // 1. 猫経験者 × 脱走傾向
+            if (HasHumanTrait(target, "cat_experienced") && cat.HasTrait("escape"))
+            {
+                e.Risk -= 10f;
+            }
+
             e.Risk = Clamp(e.Risk);
 
             // 適合3軸の平均を土台にし、Riskの35%を差し引く。+20は通常案件が
@@ -124,23 +132,12 @@ namespace NNN
             if (cat.Activity >= 70) e.TransformativeScore += 10f;
             if (cat.Sociability >= 70) e.TransformativeScore += 5f;
             AddTransformativeInteractions(e, cat, target, residence);
-            if (HasHumanTrait(target, "active_person") && cat.Activity >= 70)
-            {
-                e.StableScore += 20f;
-                e.Reasons.Add("+ Stable: 活動的な生活×高Activity +20");
-            }
-
-
-            // 1. 猫経験者 × 脱走傾向
-            if (HasHumanTrait(target, "猫経験あり") && cat.HasTrait("脱走傾向"))
-            {
-                e.Risk -= 10f;
-            }
 
             // 2. 活動的な人 × 活発な猫
-            if (HasHumanTrait(target, "活動的") && cat.HasTrait("活発"))
+            if (HasHumanTrait(target, "active_person") && cat.HasTrait("active"))
             {
                 e.StableScore += 10f;
+                e.Reasons.Add("+ Stable: 活動的な生活×活発な猫 +10");
             }
 
             // 3. 広い住居 × 高Activity猫
