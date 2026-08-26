@@ -10,7 +10,19 @@ namespace NNN
     {
         public const float DefaultViabilityThreshold = 25f;
         public const float QualityWindow = 2.5f;
+        /// <summary>安全側の既定値。実験Runnerのみコンストラクターで明示的に上書きする。</summary>
+        public const bool EnableBadOverlapPenalty = false;
+        /// <summary>正式SetScoreではなく、BadOverlap experimental selection penalty。</summary>
+        public const float BadOverlapPenalty = 0.50f;
         private const float DrawTemperature = 5f;
+        private readonly bool _enableBadOverlapPenalty;
+
+        public CandidateSetBuilder(bool enableBadOverlapPenalty = EnableBadOverlapPenalty)
+        {
+            _enableBadOverlapPenalty = enableBadOverlapPenalty;
+        }
+
+        public bool IsBadOverlapPenaltyEnabled => _enableBadOverlapPenalty;
 
         /// <summary>閾値通過猫の全3組を評価し、上位候補からSeed付き重み抽選する。</summary>
         public CandidateSetResult Build(
@@ -21,10 +33,10 @@ namespace NNN
             var ranked = EvaluateAllSets(evaluations, viabilityThreshold);
             if (ranked.Count == 0) return null;
 
-            float topScore = ranked[0].totalScore;
-            var pool = ranked.Where(x => topScore - x.totalScore <= QualityWindow).ToList();
+            float topScore = ranked[0].selectionScore;
+            var pool = ranked.Where(x => topScore - x.selectionScore <= QualityWindow).ToList();
             if (pool.Count == 0) pool.Add(ranked[0]);
-            var weights = pool.Select(x => Math.Exp((x.totalScore - topScore) / DrawTemperature)).ToArray();
+            var weights = pool.Select(x => Math.Exp((x.selectionScore - topScore) / DrawTemperature)).ToArray();
             double totalWeight = weights.Sum();
             // 同じSeedでも人間（評価値）が違えば同じ抽選順位へ偏らない一方、
             // 同じ案件・同じSeedなら必ず再現できる乱数系列を作る。
@@ -72,7 +84,7 @@ namespace NNN
                     for (int k = j + 1; k < viable.Count; k++)
                         results.Add(EvaluateSet(viable[i], viable[j], viable[k]));
 
-            results = results.OrderByDescending(x => x.totalScore).ToList();
+            results = results.OrderByDescending(x => x.selectionScore).ToList();
             for (int i = 0; i < results.Count; i++)
             {
                 results[i].rank = i + 1;
@@ -81,7 +93,7 @@ namespace NNN
             return results;
         }
 
-        private static CandidateSetResult EvaluateSet(CandidateEvaluation a, CandidateEvaluation b, CandidateEvaluation c)
+        private CandidateSetResult EvaluateSet(CandidateEvaluation a, CandidateEvaluation b, CandidateEvaluation c)
         {
             float viability = EvaluateViability(a, b, c);
             float diversity = EvaluateDiversity(a, b, c);
@@ -89,6 +101,12 @@ namespace NNN
             float tension = EvaluateTension(a, b, c);
             int coverage = new[] { HighestRole(a), HighestRole(b), HighestRole(c) }.Distinct().Count();
             float coverageBonus = coverage == 3 ? 15f : coverage == 2 ? 7f : 0f;
+            float baseTotalScore = viability * 0.35f + diversity * 0.30f +
+                distinctiveness * 0.20f + tension * 0.15f + coverageBonus;
+            var badOverlapDiagnostic = CandidateBadOverlapAnalyzer.EvaluateSet(a, b, c);
+            float penaltyApplied = _enableBadOverlapPenalty && badOverlapDiagnostic.BadOverlapCandidate
+                ? BadOverlapPenalty
+                : 0f;
             return new CandidateSetResult
             {
                 catA = a, catB = b, catC = c,
@@ -98,8 +116,10 @@ namespace NNN
                 tension = tension,
                 roleCoverage = coverage,
                 roleCoverageBonus = coverageBonus,
-                totalScore = viability * 0.35f + diversity * 0.30f +
-                    distinctiveness * 0.20f + tension * 0.15f + coverageBonus
+                totalScore = baseTotalScore,
+                selectionScore = baseTotalScore - penaltyApplied,
+                badOverlapPenaltyApplied = penaltyApplied,
+                badOverlapDiagnostic = badOverlapDiagnostic
             };
         }
 

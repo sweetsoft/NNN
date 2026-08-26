@@ -84,12 +84,15 @@ namespace NNN.Editor
             output.AppendLine(string.Format("Rank {0}", set.rank));
             output.AppendLine(string.Format("Cats: {0} / {1} / {2}",
                 set.catA.Cat.DisplayName, set.catB.Cat.DisplayName, set.catC.Cat.DisplayName));
-            output.AppendLine(string.Format("SetScore: {0:0.00}", set.totalScore));
+            output.AppendLine(string.Format("BaseScore: {0:0.00}", set.totalScore));
+            output.AppendLine(string.Format("PenaltyApplied: {0:0.00}", set.badOverlapPenaltyApplied));
+            output.AppendLine(string.Format("AdjustedScore: {0:0.00}", set.selectionScore));
             output.AppendLine(string.Format("Viability: {0:0.00}", set.viability));
             output.AppendLine(string.Format("Diversity: {0:0.00}", set.diversity));
             output.AppendLine(string.Format("Distinctiveness: {0:0.00}", set.distinctiveness));
             output.AppendLine(string.Format("Tension: {0:0.00}", set.tension));
             output.AppendLine(string.Format("RoleCoverage: {0}", set.roleCoverage));
+            AppendBadOverlap(output, set);
             if (includeCatScores)
             {
                 foreach (var cat in set.Cats)
@@ -98,6 +101,21 @@ namespace NNN.Editor
                         cat.SlowBuildScore, cat.TransformativeScore));
             }
             output.AppendLine();
+        }
+
+        private static void AppendBadOverlap(StringBuilder output, CandidateSetResult set)
+        {
+            var diagnostic = set.badOverlapDiagnostic;
+            var pair = diagnostic != null ? diagnostic.RepresentativePair : null;
+            output.AppendLine(string.Format("BadOverlapCandidate: {0}", diagnostic != null && diagnostic.BadOverlapCandidate));
+            output.AppendLine(string.Format("BadOverlapPairCount: {0}", diagnostic != null ? diagnostic.BadOverlapPairCount : 0));
+            if (pair == null) return;
+            output.AppendLine(string.Format("DiagnosticPair: {0}", pair.PairName));
+            output.AppendLine(string.Format("DominantCat: {0}", pair.DominantCat != null ? pair.DominantCat.Cat.DisplayName : "-"));
+            output.AppendLine(string.Format("NearDominatedCat: {0}", pair.NearDominatedCat != null ? pair.NearDominatedCat.Cat.DisplayName : "-"));
+            output.AppendLine(string.Format("FunctionalSimilarity: {0:0.000}", pair.FunctionalSimilarity));
+            output.AppendLine(string.Format("NearDominance: {0}", pair.NearDominance));
+            output.AppendLine(string.Format("LowSideTradeoffValue: {0:0.00}", pair.LowSideTradeoffValue));
         }
     }
 }

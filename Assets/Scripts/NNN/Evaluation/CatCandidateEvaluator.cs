@@ -28,6 +28,8 @@ namespace NNN
         public float TransformativeScore;
         /// <summary>デバッグ画面へ表示する、主な加点・減点・集計理由。</summary>
         public readonly List<string> Reasons = new List<string>();
+        /// <summary>BadOverlap診断専用。評価式やSetScoreでは使用しない。</summary>
+        public readonly List<CandidateDiagnosticReason> DiagnosticReasons = new List<CandidateDiagnosticReason>();
 
         /// <summary>指定された役割に対応するRole Scoreだけを返す。</summary>
         public float ScoreFor(CandidateRole role)
@@ -158,6 +160,7 @@ namespace NNN
             e.TransformativeScore = Clamp(e.TransformativeScore);
 
             e.Reasons.Add(string.Format("= Viability {0:0.0} (適合平均 − Risk影響)", e.Viability));
+            CandidateDiagnosticReasonBuilder.Populate(e, target);
             return e;
         }
 

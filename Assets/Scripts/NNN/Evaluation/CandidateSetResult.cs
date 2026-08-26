@@ -20,11 +20,18 @@ namespace NNN
         public int roleCoverage;
         /// <summary>Role Coverageによるソフトボーナス（0 / 7 / 15）。</summary>
         public float roleCoverageBonus;
+        /// <summary>既存のSetScore式だけで算出した基礎評価値。実験補正では変更しない。</summary>
         public float totalScore;
-        /// <summary>全セットをtotalScore降順に並べた順位（1始まり）。</summary>
+        /// <summary>順位・Quality Window・抽選に使う値。実験OFF時はtotalScoreと完全一致する。</summary>
+        public float selectionScore;
+        /// <summary>BadOverlap experimental selection penalty。基本SetScoreの構成要素ではない。</summary>
+        public float badOverlapPenaltyApplied;
+        /// <summary>全セットをselectionScore降順に並べた順位（1始まり）。</summary>
         public int rank;
         public int evaluatedSets;
         public int seed;
+        /// <summary>TotalScore・順位・抽選へ影響しない並列診断結果。</summary>
+        public CandidateSetBadOverlapDiagnostic badOverlapDiagnostic;
 
         public IEnumerable<CandidateEvaluation> Cats
         {
