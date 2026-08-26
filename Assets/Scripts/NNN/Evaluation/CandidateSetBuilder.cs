@@ -9,22 +9,21 @@ namespace NNN
     public sealed class CandidateSetBuilder
     {
         public const float DefaultViabilityThreshold = 25f;
-        public const int DefaultDrawPoolSize = 5;
+        public const float QualityWindow = 2.5f;
         private const float DrawTemperature = 5f;
 
         /// <summary>閾値通過猫の全3組を評価し、上位候補からSeed付き重み抽選する。</summary>
         public CandidateSetResult Build(
             IReadOnlyList<CandidateEvaluation> evaluations,
             int seed,
-            float viabilityThreshold = DefaultViabilityThreshold,
-            int drawPoolSize = DefaultDrawPoolSize)
+            float viabilityThreshold = DefaultViabilityThreshold)
         {
             var ranked = EvaluateAllSets(evaluations, viabilityThreshold);
             if (ranked.Count == 0) return null;
 
-            int poolCount = Mathf.Clamp(drawPoolSize, 1, ranked.Count);
-            var pool = ranked.Take(poolCount).ToList();
-            float topScore = pool[0].totalScore;
+            float topScore = ranked[0].totalScore;
+            var pool = ranked.Where(x => topScore - x.totalScore <= QualityWindow).ToList();
+            if (pool.Count == 0) pool.Add(ranked[0]);
             var weights = pool.Select(x => Math.Exp((x.totalScore - topScore) / DrawTemperature)).ToArray();
             double totalWeight = weights.Sum();
             // 同じSeedでも人間（評価値）が違えば同じ抽選順位へ偏らない一方、
