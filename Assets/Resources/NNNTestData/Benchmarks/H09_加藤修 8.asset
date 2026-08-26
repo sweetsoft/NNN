@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: "H09_\u52A0\u85E4\u4FEE 8"
+  m_EditorClassIdentifier: Assembly-CSharp:NNN:HumanBenchmarkDefinition
+  Id: h09
+  DisplayName: "H09 \u52A0\u85E4 \u4FEE"
+  BenchmarkId: H09
+  HumanName: "\u52A0\u85E4 \u4FEE"
+  Age: 52
+  Archetype: {fileID: 11400000, guid: 5829b9bc16f2b854c95a88fdd8a39691, type: 2}
+  Lifestyle: {fileID: 11400000, guid: d429ce722f1973849a671b2f51c483ca, type: 2}
+  Residence: {fileID: 11400000, guid: 0261b81165dbbb4439d7e8b7b1a4747e, type: 2}
+  Problems: []
