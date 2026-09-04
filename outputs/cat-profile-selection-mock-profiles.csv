@@ -1,0 +1,61 @@
+﻿HumanId,Seed,Cat,Age,Tags,Behavior,Caution,PrimaryAnchor,SecondaryFeature,AbilityBands,TagTextLength,BehaviorLength,CautionLength,TotalVisibleCharacters,SentenceCount
+"H01",11111,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H01",11111,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H01",11111,"シロ",8,"#おだやか #物静か","静かにくつろぐ時間を多く持ち、ときどき人の近くへ来る。環境が変わっても、落ち着ける場所を比較的見つけやすい。","",quiet,adaptability.VeryHigh,"A=Low,S=High,I=High,D=VeryHigh",10,54,0,67,2
+"H01",22222,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H01",22222,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H01",22222,"ソラ",4,"#おだやか #遊び好き #高いところ好き","人やおもちゃの動きへ反応し、高い場所へ移って周囲を見ることも好む。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",playful,trait.high_place,"A=Middle,S=High,I=Middle,D=VeryHigh",20,59,0,82,2
+"H02",11111,"ナギ",5,"#物静か #ひとり上手","落ち着ける場所を見つけ、長く静かに過ごすことが多い。必要なときにだけ場所を移し、自分の時間を保つ。","",quiet+independent,activity.VeryLow,"A=VeryLow,S=Low,I=VeryHigh,D=High",11,49,0,63,2
+"H02",11111,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2
+"H02",11111,"ポン",1,"#活発 #遊び好き","人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。遊びの合間には自分で気になる場所を確かめることもある。","",active+playful,none,"A=VeryHigh,S=High,I=Middle,D=High",9,61,0,73,2
+"H02",22222,"ナギ",5,"#物静か #ひとり上手","落ち着ける場所を見つけ、長く静かに過ごすことが多い。必要なときにだけ場所を移し、自分の時間を保つ。","",quiet+independent,activity.VeryLow,"A=VeryLow,S=Low,I=VeryHigh,D=High",11,49,0,63,2
+"H02",22222,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2
+"H02",22222,"ポン",1,"#活発 #遊び好き","人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。遊びの合間には自分で気になる場所を確かめることもある。","",active+playful,none,"A=VeryHigh,S=High,I=Middle,D=High",9,61,0,73,2
+"H03",11111,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H03",11111,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H03",11111,"ポン",1,"#活発 #遊び好き","人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。遊びの合間には自分で気になる場所を確かめることもある。","",active+playful,none,"A=VeryHigh,S=High,I=Middle,D=High",9,61,0,73,2
+"H03",22222,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H03",22222,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H03",22222,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H04",11111,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H04",11111,"ソラ",4,"#おだやか #遊び好き #高いところ好き","人やおもちゃの動きへ反応し、高い場所へ移って周囲を見ることも好む。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",playful,trait.high_place,"A=Middle,S=High,I=Middle,D=VeryHigh",20,59,0,82,2
+"H04",11111,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2
+"H04",22222,"ミケ",3,"#人なつっこい #おだやか","人の近くへ自分から寄り、触れ合う時間を持つ。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",ability.sociability,adaptability.VeryHigh,"A=Middle,S=VeryHigh,I=Low,D=VeryHigh",13,48,0,64,2
+"H04",22222,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H04",22222,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2
+"H05",11111,"ナギ",5,"#物静か #ひとり上手","落ち着ける場所を見つけ、長く静かに過ごすことが多い。必要なときにだけ場所を移し、自分の時間を保つ。","",quiet+independent,activity.VeryLow,"A=VeryLow,S=Low,I=VeryHigh,D=High",11,49,0,63,2
+"H05",11111,"ツムギ",7,"#慎重 #ひとり上手 #物静か","静かな場所から周囲を観察し、すぐには近づかず様子を見る。新しい状況では、十分に安全を確かめながら少しずつ馴染む。","",quiet+independent,trait.timid,"A=Low,S=Low,I=VeryHigh,D=Low",15,56,0,75,2
+"H05",11111,"ポン",1,"#活発 #遊び好き","人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。遊びの合間には自分で気になる場所を確かめることもある。","",active+playful,none,"A=VeryHigh,S=High,I=Middle,D=High",9,61,0,73,2
+"H05",22222,"ツムギ",7,"#慎重 #ひとり上手 #物静か","静かな場所から周囲を観察し、すぐには近づかず様子を見る。新しい状況では、十分に安全を確かめながら少しずつ馴染む。","",quiet+independent,trait.timid,"A=Low,S=Low,I=VeryHigh,D=Low",15,56,0,75,2
+"H05",22222,"ポン",1,"#活発 #遊び好き","人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。遊びの合間には自分で気になる場所を確かめることもある。","",active+playful,none,"A=VeryHigh,S=High,I=Middle,D=High",9,61,0,73,2
+"H05",22222,"ヨル",5,"#夜型 #高いところ好き #ひとり上手","夜になると高い場所へ移り、周囲を眺めながら自分の時間を過ごす。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",night+high_place,independence.VeryHigh,"A=High,S=Low,I=VeryHigh,D=VeryHigh",19,57,0,79,2
+"H06",11111,"モモ",5,"#甘えん坊 #寂しがり","人の気配を探し、自分から近くへ寄って触れ合いを求める。ひとりで長く過ごすより、人のそばを選ぶことが多い。","",affectionate+lonely,sociability.VeryHigh,"A=Low,S=VeryHigh,I=Low,D=High",11,52,0,66,2
+"H06",11111,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H06",11111,"スズ",8,"#物静か #ひとり上手 #おだやか","落ち着ける場所で静かに過ごし、必要なときにだけ人の近くへ来る。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",quiet+independent,activity.VeryLow,"A=VeryLow,S=Middle,I=High,D=VeryHigh",17,57,0,77,2
+"H06",22222,"モモ",5,"#甘えん坊 #寂しがり","人の気配を探し、自分から近くへ寄って触れ合いを求める。ひとりで長く過ごすより、人のそばを選ぶことが多い。","",affectionate+lonely,sociability.VeryHigh,"A=Low,S=VeryHigh,I=Low,D=High",11,52,0,66,2
+"H06",22222,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H06",22222,"スズ",8,"#物静か #ひとり上手 #おだやか","落ち着ける場所で静かに過ごし、必要なときにだけ人の近くへ来る。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",quiet+independent,activity.VeryLow,"A=VeryLow,S=Middle,I=High,D=VeryHigh",17,57,0,77,2
+"H07",11111,"ミケ",3,"#人なつっこい #おだやか","人の近くへ自分から寄り、触れ合う時間を持つ。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",ability.sociability,adaptability.VeryHigh,"A=Middle,S=VeryHigh,I=Low,D=VeryHigh",13,48,0,64,2
+"H07",11111,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H07",11111,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H07",22222,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H07",22222,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2
+"H07",22222,"アラシ",2,"#活発 #高いところ好き #遊び好き","おもちゃや気になるものへすぐ反応し、高い場所も使いながら次の刺激を探す。交流と自分の探索を行き来する。","",active+playful,trait.high_place,"A=VeryHigh,S=Middle,I=Middle,D=High",18,51,0,73,2
+"H08",11111,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H08",11111,"サバ",4,"#遊び好き #ひとり上手","気になるものへ反応して遊び始め、満足すると自分の場所へ戻る。人と離れていても、自分の時間を保ちやすい。","",playful,none,"A=High,S=Middle,I=High,D=High",12,51,0,66,2
+"H08",11111,"ツムギ",7,"#慎重 #ひとり上手 #物静か","静かな場所から周囲を観察し、すぐには近づかず様子を見る。新しい状況では、十分に安全を確かめながら少しずつ馴染む。","",quiet+independent,trait.timid,"A=Low,S=Low,I=VeryHigh,D=Low",15,56,0,75,2
+"H08",22222,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H08",22222,"サバ",4,"#遊び好き #ひとり上手","気になるものへ反応して遊び始め、満足すると自分の場所へ戻る。人と離れていても、自分の時間を保ちやすい。","",playful,none,"A=High,S=Middle,I=High,D=High",12,51,0,66,2
+"H08",22222,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H09",11111,"ミケ",3,"#人なつっこい #おだやか","人の近くへ自分から寄り、触れ合う時間を持つ。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",ability.sociability,adaptability.VeryHigh,"A=Middle,S=VeryHigh,I=Low,D=VeryHigh",13,48,0,64,2
+"H09",11111,"ゴマ",7,"#物静か #ひとり上手 #夜型","自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。長いひとり時間も、自分のペースで過ごせる。","",quiet+independent,trait.night,"A=Low,S=Low,I=VeryHigh,D=High",15,54,0,72,2
+"H09",11111,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H09",22222,"ミケ",3,"#人なつっこい #おだやか","人の近くへ自分から寄り、触れ合う時間を持つ。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",ability.sociability,adaptability.VeryHigh,"A=Middle,S=VeryHigh,I=Low,D=VeryHigh",13,48,0,64,2
+"H09",22222,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H09",22222,"ヨル",5,"#夜型 #高いところ好き #ひとり上手","夜になると高い場所へ移り、周囲を眺めながら自分の時間を過ごす。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",night+high_place,independence.VeryHigh,"A=High,S=Low,I=VeryHigh,D=VeryHigh",19,57,0,79,2
+"H10",11111,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H10",11111,"トラ",1,"#活発 #遊び好き #夜型","人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。夜にも交流や刺激を求めることがある。","",active+playful,sociability.VeryHigh,"A=VeryHigh,S=VeryHigh,I=Low,D=High",13,48,0,64,2
+"H10",11111,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H10",22222,"クロ",6,"#慎重 #夜型 #高いところ好き","夜になると高い場所へ移り、少し離れたところから周囲を眺める。初めての状況では、すぐに近づかず様子を見る。","",night+high_place,independence.VeryHigh,"A=Low,S=Low,I=VeryHigh,D=Middle",16,52,0,71,2
+"H10",22222,"コハル",6,"#甘えん坊 #おだやか #寂しがり","人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。","",affectionate+lonely,activity.VeryLow,"A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh",17,52,0,73,2
+"H10",22222,"リン",4,"#人なつっこい #おだやか","人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。","出入口が開くと、外へ出ようとすることがある。",ability.sociability,none,"A=Low,S=VeryHigh,I=Low,D=High",13,42,22,80,2

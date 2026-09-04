@@ -1,0 +1,726 @@
+﻿Cat Profile Selection Mock (H01-H10 x Seeds 11111/22222, 20 cats, BadOverlap Penalty OFF)
+
+==================================================
+H01 田中 健一
+Seed: 11111
+Selected Cats: クロ / トラ / シロ
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[3] シロ　8歳
+#おだやか #物静か
+
+静かにくつろぐ時間を多く持ち、ときどき人の近くへ来る。
+環境が変わっても、落ち着ける場所を比較的見つけやすい。
+[Length Tags=10 Behavior=54 Caution=0 Total=67 Sentences=2]
+[Profile diagnostics]
+クロ/トラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/シロ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+トラ/シロ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H01 田中 健一
+Seed: 22222
+Selected Cats: クロ / トラ / ソラ
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[3] ソラ　4歳
+#おだやか #遊び好き #高いところ好き
+
+人やおもちゃの動きへ反応し、高い場所へ移って周囲を見ることも好む。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=20 Behavior=59 Caution=0 Total=82 Sentences=2]
+[Profile diagnostics]
+クロ/トラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/ソラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+トラ/ソラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.200 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H02 佐藤 美咲
+Seed: 11111
+Selected Cats: ナギ / リン / ポン
+==================================================
+
+[1] ナギ　5歳
+#物静か #ひとり上手
+
+落ち着ける場所を見つけ、長く静かに過ごすことが多い。
+必要なときにだけ場所を移し、自分の時間を保つ。
+[Length Tags=11 Behavior=49 Caution=0 Total=63 Sentences=2]
+
+[2] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+
+[3] ポン　1歳
+#活発 #遊び好き
+
+人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。
+遊びの合間には自分で気になる場所を確かめることもある。
+[Length Tags=9 Behavior=61 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+ナギ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+ナギ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+リン/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.000 AverageTagJaccard=0.000 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H02 佐藤 美咲
+Seed: 22222
+Selected Cats: ナギ / リン / ポン
+==================================================
+
+[1] ナギ　5歳
+#物静か #ひとり上手
+
+落ち着ける場所を見つけ、長く静かに過ごすことが多い。
+必要なときにだけ場所を移し、自分の時間を保つ。
+[Length Tags=11 Behavior=49 Caution=0 Total=63 Sentences=2]
+
+[2] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+
+[3] ポン　1歳
+#活発 #遊び好き
+
+人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。
+遊びの合間には自分で気になる場所を確かめることもある。
+[Length Tags=9 Behavior=61 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+ナギ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+ナギ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+リン/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.000 AverageTagJaccard=0.000 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H03 山本 和夫
+Seed: 11111
+Selected Cats: クロ / ゴマ / ポン
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+
+[3] ポン　1歳
+#活発 #遊び好き
+
+人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。
+遊びの合間には自分で気になる場所を確かめることもある。
+[Length Tags=9 Behavior=61 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+クロ/ゴマ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ゴマ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H03 山本 和夫
+Seed: 22222
+Selected Cats: クロ / ゴマ / コハル
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+
+[3] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+クロ/ゴマ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ゴマ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H04 鈴木 彩
+Seed: 11111
+Selected Cats: ゴマ / ソラ / リン
+==================================================
+
+[1] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+
+[2] ソラ　4歳
+#おだやか #遊び好き #高いところ好き
+
+人やおもちゃの動きへ反応し、高い場所へ移って周囲を見ることも好む。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=20 Behavior=59 Caution=0 Total=82 Sentences=2]
+
+[3] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+[Profile diagnostics]
+ゴマ/ソラ: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ゴマ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+ソラ/リン: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.083 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H04 鈴木 彩
+Seed: 22222
+Selected Cats: ミケ / ゴマ / リン
+==================================================
+
+[1] ミケ　3歳
+#人なつっこい #おだやか
+
+人の近くへ自分から寄り、触れ合う時間を持つ。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+
+[3] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+[Profile diagnostics]
+ミケ/ゴマ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ミケ/リン: SharedTags=2 TagJaccard=1.000 TagDifference=0 AnchorMatch=True CautionDifference=True BehaviorExact=False Class=Strong
+ゴマ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=1.000 AverageTagJaccard=0.333 WeakPairs=0 SimilarPair=False Monotone=False
+[Focus pair] ミケ / リン
+ミケ: Tags=#人なつっこい/#おだやか Anchor=ability.sociability Secondary=adaptability.VeryHigh Bands=A=Middle,S=VeryHigh,I=Low,D=VeryHigh Behavior=人の近くへ自分から寄り、触れ合う時間を持つ。新しい状況でも、落ち着ける場所を比較的見つけやすい。 Caution=なし
+リン: Tags=#人なつっこい/#おだやか Anchor=ability.sociability Secondary=none Bands=A=Low,S=VeryHigh,I=Low,D=High Behavior=人の近くへ寄って穏やかに過ごす。新しい状況では、様子を見ながら普段の過ごし方へ戻る。 Caution=出入口が開くと、外へ出ようとすることがある。
+
+==================================================
+H05 高橋 直樹
+Seed: 11111
+Selected Cats: ナギ / ツムギ / ポン
+==================================================
+
+[1] ナギ　5歳
+#物静か #ひとり上手
+
+落ち着ける場所を見つけ、長く静かに過ごすことが多い。
+必要なときにだけ場所を移し、自分の時間を保つ。
+[Length Tags=11 Behavior=49 Caution=0 Total=63 Sentences=2]
+
+[2] ツムギ　7歳
+#慎重 #ひとり上手 #物静か
+
+静かな場所から周囲を観察し、すぐには近づかず様子を見る。
+新しい状況では、十分に安全を確かめながら少しずつ馴染む。
+[Length Tags=15 Behavior=56 Caution=0 Total=75 Sentences=2]
+
+[3] ポン　1歳
+#活発 #遊び好き
+
+人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。
+遊びの合間には自分で気になる場所を確かめることもある。
+[Length Tags=9 Behavior=61 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+ナギ/ツムギ: SharedTags=2 TagJaccard=0.667 TagDifference=1 AnchorMatch=True CautionDifference=False BehaviorExact=False Class=Moderate
+ナギ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ツムギ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.667 AverageTagJaccard=0.222 WeakPairs=0 SimilarPair=True Monotone=False
+
+==================================================
+H05 高橋 直樹
+Seed: 22222
+Selected Cats: ツムギ / ポン / ヨル
+==================================================
+
+[1] ツムギ　7歳
+#慎重 #ひとり上手 #物静か
+
+静かな場所から周囲を観察し、すぐには近づかず様子を見る。
+新しい状況では、十分に安全を確かめながら少しずつ馴染む。
+[Length Tags=15 Behavior=56 Caution=0 Total=75 Sentences=2]
+
+[2] ポン　1歳
+#活発 #遊び好き
+
+人やおもちゃの動きへすぐ反応し、交流を交えながら遊び続けようとする。
+遊びの合間には自分で気になる場所を確かめることもある。
+[Length Tags=9 Behavior=61 Caution=0 Total=73 Sentences=2]
+
+[3] ヨル　5歳
+#夜型 #高いところ好き #ひとり上手
+
+夜になると高い場所へ移り、周囲を眺めながら自分の時間を過ごす。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=19 Behavior=57 Caution=0 Total=79 Sentences=2]
+[Profile diagnostics]
+ツムギ/ポン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ツムギ/ヨル: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ポン/ヨル: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H06 伊藤 由美
+Seed: 11111
+Selected Cats: モモ / コハル / スズ
+==================================================
+
+[1] モモ　5歳
+#甘えん坊 #寂しがり
+
+人の気配を探し、自分から近くへ寄って触れ合いを求める。
+ひとりで長く過ごすより、人のそばを選ぶことが多い。
+[Length Tags=11 Behavior=52 Caution=0 Total=66 Sentences=2]
+
+[2] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+
+[3] スズ　8歳
+#物静か #ひとり上手 #おだやか
+
+落ち着ける場所で静かに過ごし、必要なときにだけ人の近くへ来る。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=57 Caution=0 Total=77 Sentences=2]
+[Profile diagnostics]
+モモ/コハル: SharedTags=2 TagJaccard=0.667 TagDifference=1 AnchorMatch=True CautionDifference=False BehaviorExact=False Class=Moderate
+モモ/スズ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+コハル/スズ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.667 AverageTagJaccard=0.289 WeakPairs=0 SimilarPair=True Monotone=False
+[Focus pair] モモ / コハル
+モモ: Tags=#甘えん坊/#寂しがり Anchor=affectionate+lonely Secondary=sociability.VeryHigh Bands=A=Low,S=VeryHigh,I=Low,D=High Behavior=人の気配を探し、自分から近くへ寄って触れ合いを求める。ひとりで長く過ごすより、人のそばを選ぶことが多い。 Caution=なし
+コハル: Tags=#甘えん坊/#おだやか/#寂しがり Anchor=affectionate+lonely Secondary=activity.VeryLow Bands=A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh Behavior=人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。 Caution=なし
+
+==================================================
+H06 伊藤 由美
+Seed: 22222
+Selected Cats: モモ / コハル / スズ
+==================================================
+
+[1] モモ　5歳
+#甘えん坊 #寂しがり
+
+人の気配を探し、自分から近くへ寄って触れ合いを求める。
+ひとりで長く過ごすより、人のそばを選ぶことが多い。
+[Length Tags=11 Behavior=52 Caution=0 Total=66 Sentences=2]
+
+[2] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+
+[3] スズ　8歳
+#物静か #ひとり上手 #おだやか
+
+落ち着ける場所で静かに過ごし、必要なときにだけ人の近くへ来る。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=57 Caution=0 Total=77 Sentences=2]
+[Profile diagnostics]
+モモ/コハル: SharedTags=2 TagJaccard=0.667 TagDifference=1 AnchorMatch=True CautionDifference=False BehaviorExact=False Class=Moderate
+モモ/スズ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+コハル/スズ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.667 AverageTagJaccard=0.289 WeakPairs=0 SimilarPair=True Monotone=False
+[Focus pair] モモ / コハル
+モモ: Tags=#甘えん坊/#寂しがり Anchor=affectionate+lonely Secondary=sociability.VeryHigh Bands=A=Low,S=VeryHigh,I=Low,D=High Behavior=人の気配を探し、自分から近くへ寄って触れ合いを求める。ひとりで長く過ごすより、人のそばを選ぶことが多い。 Caution=なし
+コハル: Tags=#甘えん坊/#おだやか/#寂しがり Anchor=affectionate+lonely Secondary=activity.VeryLow Bands=A=VeryLow,S=VeryHigh,I=Low,D=VeryHigh Behavior=人の気配を探し、静かに近くへ寄って触れ合いを求める。新しい状況でも、落ち着ける場所を比較的見つけやすい。 Caution=なし
+
+==================================================
+H07 中村 浩二
+Seed: 11111
+Selected Cats: ミケ / クロ / トラ
+==================================================
+
+[1] ミケ　3歳
+#人なつっこい #おだやか
+
+人の近くへ自分から寄り、触れ合う時間を持つ。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[3] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+[Profile diagnostics]
+ミケ/クロ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ミケ/トラ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/トラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H07 中村 浩二
+Seed: 22222
+Selected Cats: クロ / リン / アラシ
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+
+[3] アラシ　2歳
+#活発 #高いところ好き #遊び好き
+
+おもちゃや気になるものへすぐ反応し、高い場所も使いながら次の刺激を探す。
+交流と自分の探索を行き来する。
+[Length Tags=18 Behavior=51 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+クロ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+クロ/アラシ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+リン/アラシ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H08 小林 麻衣
+Seed: 11111
+Selected Cats: トラ / サバ / ツムギ
+==================================================
+
+[1] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] サバ　4歳
+#遊び好き #ひとり上手
+
+気になるものへ反応して遊び始め、満足すると自分の場所へ戻る。
+人と離れていても、自分の時間を保ちやすい。
+[Length Tags=12 Behavior=51 Caution=0 Total=66 Sentences=2]
+
+[3] ツムギ　7歳
+#慎重 #ひとり上手 #物静か
+
+静かな場所から周囲を観察し、すぐには近づかず様子を見る。
+新しい状況では、十分に安全を確かめながら少しずつ馴染む。
+[Length Tags=15 Behavior=56 Caution=0 Total=75 Sentences=2]
+[Profile diagnostics]
+トラ/サバ: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+トラ/ツムギ: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+サバ/ツムギ: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.167 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H08 小林 麻衣
+Seed: 22222
+Selected Cats: トラ / サバ / ゴマ
+==================================================
+
+[1] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] サバ　4歳
+#遊び好き #ひとり上手
+
+気になるものへ反応して遊び始め、満足すると自分の場所へ戻る。
+人と離れていても、自分の時間を保ちやすい。
+[Length Tags=12 Behavior=51 Caution=0 Total=66 Sentences=2]
+
+[3] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+[Profile diagnostics]
+トラ/サバ: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+トラ/ゴマ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+サバ/ゴマ: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.233 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H09 加藤 修
+Seed: 11111
+Selected Cats: ミケ / ゴマ / コハル
+==================================================
+
+[1] ミケ　3歳
+#人なつっこい #おだやか
+
+人の近くへ自分から寄り、触れ合う時間を持つ。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] ゴマ　7歳
+#物静か #ひとり上手 #夜型
+
+自分の場所で静かに過ごし、夜になると周囲を見回るために場所を移す。
+長いひとり時間も、自分のペースで過ごせる。
+[Length Tags=15 Behavior=54 Caution=0 Total=72 Sentences=2]
+
+[3] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+ミケ/ゴマ: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ミケ/コハル: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ゴマ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.083 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H09 加藤 修
+Seed: 22222
+Selected Cats: ミケ / コハル / ヨル
+==================================================
+
+[1] ミケ　3歳
+#人なつっこい #おだやか
+
+人の近くへ自分から寄り、触れ合う時間を持つ。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[2] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+
+[3] ヨル　5歳
+#夜型 #高いところ好き #ひとり上手
+
+夜になると高い場所へ移り、周囲を眺めながら自分の時間を過ごす。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=19 Behavior=57 Caution=0 Total=79 Sentences=2]
+[Profile diagnostics]
+ミケ/コハル: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+ミケ/ヨル: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+コハル/ヨル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.083 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H10 吉田 恵
+Seed: 11111
+Selected Cats: クロ / トラ / コハル
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] トラ　1歳
+#活発 #遊び好き #夜型
+
+人やおもちゃの動きへすぐ反応し、そのまま遊び続けようとする。
+夜にも交流や刺激を求めることがある。
+[Length Tags=13 Behavior=48 Caution=0 Total=64 Sentences=2]
+
+[3] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+[Profile diagnostics]
+クロ/トラ: SharedTags=1 TagJaccard=0.200 TagDifference=4 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+トラ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.200 AverageTagJaccard=0.067 WeakPairs=0 SimilarPair=False Monotone=False
+
+==================================================
+H10 吉田 恵
+Seed: 22222
+Selected Cats: クロ / コハル / リン
+==================================================
+
+[1] クロ　6歳
+#慎重 #夜型 #高いところ好き
+
+夜になると高い場所へ移り、少し離れたところから周囲を眺める。
+初めての状況では、すぐに近づかず様子を見る。
+[Length Tags=16 Behavior=52 Caution=0 Total=71 Sentences=2]
+
+[2] コハル　6歳
+#甘えん坊 #おだやか #寂しがり
+
+人の気配を探し、静かに近くへ寄って触れ合いを求める。
+新しい状況でも、落ち着ける場所を比較的見つけやすい。
+[Length Tags=17 Behavior=52 Caution=0 Total=73 Sentences=2]
+
+[3] リン　4歳
+#人なつっこい #おだやか
+
+人の近くへ寄って穏やかに過ごす。
+新しい状況では、様子を見ながら普段の過ごし方へ戻る。
+
+注意:
+出入口が開くと、外へ出ようとすることがある。
+[Length Tags=13 Behavior=42 Caution=22 Total=80 Sentences=2]
+[Profile diagnostics]
+クロ/コハル: SharedTags=0 TagJaccard=0.000 TagDifference=6 AnchorMatch=False CautionDifference=False BehaviorExact=False Class=Strong
+クロ/リン: SharedTags=0 TagJaccard=0.000 TagDifference=5 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+コハル/リン: SharedTags=1 TagJaccard=0.250 TagDifference=3 AnchorMatch=False CautionDifference=True BehaviorExact=False Class=Strong
+Set: MaxTagJaccard=0.250 AverageTagJaccard=0.083 WeakPairs=0 SimilarPair=False Monotone=False
+
+=== Aggregate ===
+Selected sets: 20
+Profile Similar Pair occurrences: 3
+Monotone Set Candidates: 0
+Caution profiles: 6
+BehaviorLength Min=42 Max=61 Average=51.88 Median=52.00 P90=59
+One sentence profiles: 0
+Two sentence profiles: 60
+Cat selection counts:
+クロ: 8
+コハル: 7
+ゴマ: 6
+トラ: 6
+リン: 6
+ポン: 5
+ミケ: 4
+ツムギ: 3
+ナギ: 3
+サバ: 2
+スズ: 2
+ソラ: 2
+モモ: 2
+ヨル: 2
+アラシ: 1
+シロ: 1
+Tag combination counts:
+#人なつっこい/#おだやか: 10
+#慎重/#夜型/#高いところ好き: 8
+#甘えん坊/#おだやか/#寂しがり: 7
+#活発/#遊び好き/#夜型: 6
+#物静か/#ひとり上手/#夜型: 6
+#活発/#遊び好き: 5
+#慎重/#ひとり上手/#物静か: 3
+#物静か/#ひとり上手: 3
+#おだやか/#遊び好き/#高いところ好き: 2
+#甘えん坊/#寂しがり: 2
+#物静か/#ひとり上手/#おだやか: 2
+#夜型/#高いところ好き/#ひとり上手: 2
+#遊び好き/#ひとり上手: 2
+#おだやか/#物静か: 1
+#活発/#高いところ好き/#遊び好き: 1
+Behavior anchor counts:
+quiet+independent: 14
+active+playful: 12
+ability.sociability: 10
+night+high_place: 10
+affectionate+lonely: 9
+playful: 4
+quiet: 1
+Sets containing duplicate tag combinations: 1
+Focus pair occurrences:
+シロ/スズ: 0
+モモ/コハル: 2
+ミケ/リン: 1
+ゴマ/ナギ: 0
+トラ/ポン: 0
+ハチ/キリ: 0

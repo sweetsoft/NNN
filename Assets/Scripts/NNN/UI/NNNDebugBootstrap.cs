@@ -13,6 +13,7 @@ namespace NNN
             var root = new GameObject("NNN Debug UI");
             Object.DontDestroyOnLoad(root);
             root.AddComponent<NNNDebugUI>();
+            root.AddComponent<ObservationDebugRunner>();
         }
     }
 }
