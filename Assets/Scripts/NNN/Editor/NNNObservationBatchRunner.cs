@@ -1,9 +1,12 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
+using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace NNN.Editor
 {
@@ -14,6 +17,31 @@ namespace NNN.Editor
     public static class NNNObservationBatchRunner
     {
         private static readonly int[] VerificationSeeds = { 7, 42, 20260904, 8675309 };
+        private const int DefaultStressSeedCount = 1000;
+
+        // 企画書で発生日集計を要求されているイベント。配列順をレポート順としても利用する。
+        private static readonly string[] DistributionEventIds =
+        {
+            "REL_DRINK_IN_FRONT_OF_HUMAN", "REL_ENTER_HOME", "REL_SNIFF_HUMAN",
+            "REL_FIRST_TOUCH", "PROBLEM_OVERTOUCH_CAT_PUNCH", "REL_RESPECT_SIGNAL",
+            "REL_PLAY_TOGETHER", "REL_SIT_BESIDE", "REL_GREETING"
+        };
+
+        // 現行Vertical Sliceで全Seed到達を期待するイベント。未到達は警告ではなく進行不能として扱う。
+        private static readonly string[] RequiredEventIds =
+        {
+            "VISIT_FIRST_CONTACT", "REL_ENTER_HOME", "REL_SNIFF_HUMAN", "REL_FIRST_TOUCH",
+            "PROBLEM_OVERTOUCH_CAT_PUNCH", "REL_RESPECT_SIGNAL", "REL_PLAY_TOGETHER",
+            "REL_SIT_BESIDE", "REL_GREETING", "VISIT_DAY30_ROUTINE"
+        };
+
+        private static readonly string[] NormalEventIds =
+        {
+            "NORMAL_CAT_WATCH_HUMAN", "NORMAL_HUMAN_WATCH_CAT", "NORMAL_CAT_REST_FAR",
+            "NORMAL_CAT_REST_NEAR", "NORMAL_CAT_GROOMING", "NORMAL_CAT_EXPLORE_ROOM",
+            "NORMAL_CAT_LOOK_WINDOW", "NORMAL_HUMAN_SMARTPHONE", "NORMAL_HUMAN_MEAL",
+            "NORMAL_SHARED_ROOM"
+        };
 
         /// <summary>基準Seed一件の全日ログをConsoleへ表示し、手動で傾向を確認する。</summary>
         [MenuItem("NNN/Observation/Simulate 30 Days")]
@@ -44,6 +72,181 @@ namespace NNN.Editor
         {
             try { VerifyMultipleSeeds(); EditorApplication.Exit(0); }
             catch (Exception exception) { Debug.LogException(exception); EditorApplication.Exit(1); }
+        }
+
+        /// <summary>
+        /// Seed 0～999を連続実行し、到達性・因果順・状態遷移・密度・通常行動分布を一括診断する。
+        /// Consoleには集計と代表的な異常Seedだけを出し、全Seedの30日ログによるEditor停止を避ける。
+        /// </summary>
+        [MenuItem("NNN/Observation/Stress Test 1000 Seeds")]
+        public static void StressTest1000Seeds()
+        {
+            StressTestReport report = ExecuteStressTest(DefaultStressSeedCount);
+            UnityEngine.Debug.Log(report.Text);
+            if (report.FailedCount > 0)
+                UnityEngine.Debug.LogError("NNN Observation Stress Test failed seeds: " + report.FailedCount);
+        }
+
+        /// <summary>
+        /// batchmode用入口。検証FAILが一件でもあれば終了コード1を返し、CIが見落とさないようにする。
+        /// WARNINGだけの場合は診断情報を残しつつ終了コード0とする。
+        /// </summary>
+        // Unity -batchmode -executeMethod NNN.Editor.NNNObservationBatchRunner.RunStressTest
+        public static void RunStressTest()
+        {
+            try
+            {
+                StressTestReport report = ExecuteStressTest(DefaultStressSeedCount);
+                UnityEngine.Debug.Log(report.Text);
+                EditorApplication.Exit(report.FailedCount == 0 ? 0 : 1);
+            }
+            catch (Exception exception)
+            {
+                UnityEngine.Debug.LogException(exception);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        /// <summary>
+        /// 将来100/1000/10000件へ拡張できるよう件数を引数化した本体。
+        /// Seedごとの例外も捕捉して次Seedへ進み、低確率障害が一件で集計全体を中断しないようにする。
+        /// </summary>
+        private static StressTestReport ExecuteStressTest(int seedCount)
+        {
+            if (seedCount < 1) throw new ArgumentOutOfRangeException(nameof(seedCount));
+            var aggregate = new StressAggregate(seedCount);
+            var timer = Stopwatch.StartNew();
+
+            for (int seed = 0; seed < seedCount; seed++)
+            {
+                try
+                {
+                    var run = Run(seed);
+                    ValidateStressSeed(seed, run.Results, run.State, aggregate);
+                }
+                catch (Exception exception)
+                {
+                    aggregate.AddFailure(seed, "例外: " + exception.GetType().Name + " - " + exception.Message, null, null);
+                }
+            }
+
+            // 全件二重実行は避け、範囲全体へ均等に散らした20 Seedで乱数列と最終状態を照合する。
+            int reproducibilityCount = Math.Min(20, seedCount);
+            for (int index = 0; index < reproducibilityCount; index++)
+            {
+                int seed = reproducibilityCount == 1 ? 0 : index * (seedCount - 1) / (reproducibilityCount - 1);
+                var first = Run(seed);
+                var second = Run(seed);
+                if (Signature(first.Results) != Signature(second.Results) || StateSignature(first.State) != StateSignature(second.State))
+                    aggregate.AddFailure(seed, "同一Seedの再実行結果が一致しない", first.Results, first.State);
+            }
+
+            timer.Stop();
+            return aggregate.BuildReport(timer.Elapsed);
+        }
+
+        /// <summary>一つのSeedを検査し、FAIL/WARNINGを例外化せず集計器へ蓄積する。</summary>
+        private static void ValidateStressSeed(int seed, IList<DaySimulationResult> results, ObservationSimulationState state, StressAggregate aggregate)
+        {
+            var failures = new List<string>();
+            var warnings = new List<string>();
+            if (results == null || results.Count != 30)
+            {
+                aggregate.AddFailure(seed, "30日分の結果が返らない", results, state);
+                return;
+            }
+
+            if (results.Where((day, index) => day == null || day.Day != index + 1).Any()) failures.Add("DAY1～DAY30が昇順で揃っていない");
+            if (results.Any(day => day.NormalActionIds == null || day.NormalActionIds.Count < 1 || day.NormalActionIds.Count > 3)) failures.Add("Normal Action数が1～3の範囲外");
+            var majors = results.Where(day => !string.IsNullOrEmpty(day.MajorEventId)).ToList();
+            if (majors.GroupBy(day => day.MajorEventId).Any(group => group.Count() > 1)) failures.Add("単発Major Eventが重複した");
+
+            var days = majors.ToDictionary(day => day.MajorEventId, day => day.Day);
+            foreach (string required in RequiredEventIds)
+                if (!days.ContainsKey(required)) failures.Add(required + " が未発生");
+
+            RequireDay(days, "VISIT_FIRST_CONTACT", 1, failures);
+            RequireAfter(days, "REL_ENTER_HOME", "VISIT_FIRST_CONTACT", failures);
+            RequireAfter(days, "REL_SNIFF_HUMAN", "REL_ENTER_HOME", failures);
+            RequireAfter(days, "REL_FIRST_TOUCH", "REL_SNIFF_HUMAN", failures);
+            RequireAfter(days, "PROBLEM_OVERTOUCH_CAT_PUNCH", "REL_FIRST_TOUCH", failures);
+            RequireAfter(days, "REL_RESPECT_SIGNAL", "PROBLEM_OVERTOUCH_CAT_PUNCH", failures);
+            RequireAfter(days, "REL_PLAY_TOGETHER", "REL_RESPECT_SIGNAL", failures);
+            RequireAfter(days, "REL_SIT_BESIDE", "REL_PLAY_TOGETHER", failures);
+            RequireAfter(days, "REL_GREETING", "REL_SIT_BESIDE", failures);
+            RequireDay(days, "VISIT_DAY30_ROUTINE", 30, failures);
+
+            ValidateRegressionAndRecovery(results, days, failures);
+            if (!state.MemoryFlags.Contains(RelationshipMemory.RespectedSignal) || !state.HistoryFlags.Contains(RelationshipHistoryFlag.Greeted))
+                failures.Add("DAY30時点で関係進行が完了していない");
+
+            int maxMajorStreak = MaxConsecutive(results.Select(day => !string.IsNullOrEmpty(day.MajorEventId)));
+            int maxNoMajorStreak = MaxConsecutive(results.Select(day => string.IsNullOrEmpty(day.MajorEventId)));
+            if (maxMajorStreak >= 2) warnings.Add("Major Eventが" + maxMajorStreak + "日連続");
+            if (maxNoMajorStreak >= 10) failures.Add("Major Eventなしが" + maxNoMajorStreak + "日連続");
+            if (days.TryGetValue("REL_PLAY_TOGETHER", out int playDay) && playDay <= 10) failures.Add("後半イベントをDAY10以前に消化");
+
+            ValidateNormalActions(results, warnings, failures);
+            aggregate.Record(seed, results, state, days, majors.Count, maxMajorStreak, maxNoMajorStreak, failures, warnings);
+        }
+
+        private static void ValidateRegressionAndRecovery(IList<DaySimulationResult> results, IDictionary<string, int> days, IList<string> failures)
+        {
+            if (days.TryGetValue("PROBLEM_OVERTOUCH_CAT_PUNCH", out int punchDay))
+            {
+                DaySimulationResult punch = results[punchDay - 1];
+                if (punch.StateBefore.HumanToCat != HumanToCatState.Approach) failures.Add("猫パンチ直前のHumanToCatがApproachでない");
+                if (punch.StateAfter.HumanToCat != HumanToCatState.Watch || punch.StateAfter.CatWariness != CatWarinessState.Medium)
+                    failures.Add("猫パンチ後にWatch / Mediumへ後退しない");
+            }
+            if (days.TryGetValue("REL_RESPECT_SIGNAL", out int respectDay))
+            {
+                DaySimulationResult respect = results[respectDay - 1];
+                if (respect.StateAfter.HumanToCat != HumanToCatState.Approach || respect.StateAfter.CatWariness != CatWarinessState.Low)
+                    failures.Add("RespectedSignal後にApproach / Lowへ回復しない");
+            }
+        }
+
+        private static void ValidateNormalActions(IList<DaySimulationResult> results, IList<string> warnings, IList<string> failures)
+        {
+            foreach (DaySimulationResult day in results)
+                foreach (string action in day.NormalActionIds)
+                    if (!day.NormalCandidates.Contains(action)) failures.Add("DAY" + day.Day + "で状態条件外のNormal Action: " + action);
+
+            foreach (string id in NormalEventIds)
+            {
+                int streak = 0;
+                int maximum = 0;
+                foreach (DaySimulationResult day in results)
+                {
+                    streak = day.NormalActionIds.Contains(id) ? streak + 1 : 0;
+                    maximum = Math.Max(maximum, streak);
+                }
+                if (maximum >= 3) warnings.Add(id + " が" + maximum + "日連続");
+            }
+        }
+
+        private static void RequireAfter(IDictionary<string, int> days, string later, string earlier, IList<string> failures)
+        {
+            if (days.TryGetValue(later, out int laterDay) && days.TryGetValue(earlier, out int earlierDay) && laterDay <= earlierDay)
+                failures.Add(later + " が " + earlier + " より後でない");
+        }
+
+        private static void RequireDay(IDictionary<string, int> days, string id, int expected, IList<string> failures)
+        {
+            if (days.TryGetValue(id, out int actual) && actual != expected) failures.Add(id + " がDAY" + expected + "でない (DAY" + actual + ")");
+        }
+
+        private static int MaxConsecutive(IEnumerable<bool> values)
+        {
+            int current = 0;
+            int maximum = 0;
+            foreach (bool value in values)
+            {
+                current = value ? current + 1 : 0;
+                maximum = Math.Max(maximum, current);
+            }
+            return maximum;
         }
 
         /// <summary>RouteとSimulatorを毎回作り直し、別実行の乱数・履歴が混ざらない結果を返す。</summary>
@@ -85,10 +288,165 @@ namespace NNN.Editor
             => "Seed " + seed + " major trend: " + string.Join(" -> ", results.Where(x => !string.IsNullOrEmpty(x.MajorEventId)).Select(x => "D" + x.Day + ":" + x.MajorEventId).ToArray()) + " | Final " + state.Relationship;
         private static string Signature(IEnumerable<DaySimulationResult> results)
             => string.Join("|", results.Select(x => x.Day + ":" + x.MajorEventId + ":" + string.Join(",", x.NormalActionIds.ToArray())).ToArray());
+        private static string StateSignature(ObservationSimulationState state)
+            => state.Relationship + "|H:" + string.Join(",", state.HistoryFlags.OrderBy(x => x).Select(x => x.ToString()).ToArray()) +
+               "|M:" + string.Join(",", state.MemoryFlags.OrderBy(x => x).Select(x => x.ToString()).ToArray());
         private static int DayOf(IEnumerable<DaySimulationResult> results, string id)
         {
             var found = results.FirstOrDefault(x => x.MajorEventId == id);
             return found != null ? found.Day : -1;
+        }
+
+        private sealed class StressTestReport
+        {
+            public int FailedCount;
+            public string Text;
+        }
+
+        /// <summary>
+        /// 1000 Seed分の生ログではなく統計に必要な値だけを保持する集計器。
+        /// 異常詳細は集計中だけ保持し、出力時はFAIL優先の10件に制限する。Seed番号一覧自体は省略しない。
+        /// </summary>
+        private sealed class StressAggregate
+        {
+            private readonly int seedCount;
+            private readonly Dictionary<string, List<int>> eventDays = DistributionEventIds.ToDictionary(id => id, id => new List<int>());
+            private readonly Dictionary<string, int> normalCounts = NormalEventIds.ToDictionary(id => id, id => 0);
+            private readonly Dictionary<string, int> normalMaxStreaks = NormalEventIds.ToDictionary(id => id, id => 0);
+            private readonly Dictionary<int, List<string>> failures = new Dictionary<int, List<string>>();
+            private readonly Dictionary<int, List<string>> warnings = new Dictionary<int, List<string>>();
+            private readonly Dictionary<int, string> abnormalDetails = new Dictionary<int, string>();
+            private int completedSeedCount;
+            private int maximumMajorStreak;
+            private int maximumNoMajorStreak;
+            private int totalMajorEvents;
+
+            public StressAggregate(int seedCount) { this.seedCount = seedCount; }
+
+            public void Record(int seed, IList<DaySimulationResult> results, ObservationSimulationState state,
+                IDictionary<string, int> days, int majorCount, int majorStreak, int noMajorStreak,
+                IList<string> seedFailures, IList<string> seedWarnings)
+            {
+                completedSeedCount++;
+                totalMajorEvents += majorCount;
+                maximumMajorStreak = Math.Max(maximumMajorStreak, majorStreak);
+                maximumNoMajorStreak = Math.Max(maximumNoMajorStreak, noMajorStreak);
+                foreach (string id in DistributionEventIds)
+                    if (days.TryGetValue(id, out int day)) eventDays[id].Add(day);
+
+                foreach (string id in NormalEventIds)
+                {
+                    normalCounts[id] += results.Sum(day => day.NormalActionIds.Count(action => action == id));
+                    normalMaxStreaks[id] = Math.Max(normalMaxStreaks[id], MaxNormalStreak(results, id));
+                }
+
+                if (seedFailures.Count > 0) AddIssues(failures, seed, seedFailures);
+                if (seedWarnings.Count > 0) AddIssues(warnings, seed, seedWarnings);
+                // 詳細文字列は集計中だけ保持し、出力時にFAILを優先して最大10件へ絞る。
+                // 先に現れたWARNINGだけで表示枠が埋まり、重要なFAILの原因が隠れることを防ぐ。
+                if (seedFailures.Count > 0 || seedWarnings.Count > 0)
+                    abnormalDetails[seed] = BuildSeedDetail(seed, results, state, days, seedFailures, seedWarnings);
+            }
+
+            public void AddFailure(int seed, string message, IList<DaySimulationResult> results, ObservationSimulationState state)
+            {
+                AddIssues(failures, seed, new[] { message });
+                if (!abnormalDetails.ContainsKey(seed))
+                    abnormalDetails[seed] = BuildSeedDetail(seed, results, state, null, new[] { message }, new string[0]);
+            }
+
+            public StressTestReport BuildReport(TimeSpan elapsed)
+            {
+                int failed = failures.Count;
+                int warnedOnly = warnings.Keys.Count(seed => !failures.ContainsKey(seed));
+                int passed = seedCount - failed - warnedOnly;
+                var text = new StringBuilder();
+                text.AppendLine("NNN Observation Stress Test");
+                text.AppendLine();
+                text.AppendLine("Seeds: " + seedCount);
+                text.AppendLine("Total simulated days: " + (completedSeedCount * 30));
+                text.AppendLine("Passed: " + passed);
+                text.AppendLine("Warnings: " + warnedOnly);
+                text.AppendLine("Failed: " + failed);
+                text.AppendLine("Elapsed: " + elapsed.TotalMilliseconds.ToString("0.0", CultureInfo.InvariantCulture) + " ms");
+                text.AppendLine("Average per 30-day simulation: " + (elapsed.TotalMilliseconds / seedCount).ToString("0.000", CultureInfo.InvariantCulture) + " ms");
+                text.AppendLine("Reproducibility checks: " + Math.Min(20, seedCount) + " representative seeds (mismatches are counted as FAIL)");
+                text.AppendLine("Average Major Events: " + (completedSeedCount == 0 ? "0" : ((double)totalMajorEvents / completedSeedCount).ToString("0.00", CultureInfo.InvariantCulture)));
+                text.AppendLine("Maximum consecutive Major days: " + maximumMajorStreak);
+                text.AppendLine("Maximum no-Major gap: " + maximumNoMajorStreak);
+                text.AppendLine();
+                text.AppendLine("Event day distribution:");
+                foreach (string id in DistributionEventIds) AppendEventDistribution(text, id, eventDays[id], seedCount);
+                text.AppendLine("Normal Action distribution:");
+                foreach (string id in NormalEventIds)
+                {
+                    double rate = (double)normalCounts[id] / (seedCount * 30);
+                    text.AppendLine(id + ": Total=" + normalCounts[id] + ", PerDayRate=" + rate.ToString("P2", CultureInfo.InvariantCulture) +
+                                    ", MaxConsecutiveDays=" + normalMaxStreaks[id]);
+                }
+                text.AppendLine();
+                text.AppendLine("Failed seeds: " + FormatSeedList(failures.Keys));
+                text.AppendLine("Warning seeds: " + FormatSeedList(warnings.Keys));
+                if (abnormalDetails.Count > 0)
+                {
+                    text.AppendLine();
+                    text.AppendLine("Representative abnormal seeds (max 10):");
+                    int[] representativeSeeds = failures.Keys.OrderBy(seed => seed)
+                        .Concat(warnings.Keys.Where(seed => !failures.ContainsKey(seed)).OrderBy(seed => seed))
+                        .Distinct().Take(10).ToArray();
+                    foreach (int seed in representativeSeeds) text.AppendLine(abnormalDetails[seed]);
+                }
+                text.AppendLine();
+                text.AppendLine("Result: " + (failed > 0 ? "FAIL" : warnedOnly > 0 ? "PASS WITH WARNINGS" : "PASS"));
+                return new StressTestReport { FailedCount = failed, Text = text.ToString() };
+            }
+
+            private static void AppendEventDistribution(StringBuilder text, string id, IList<int> days, int seeds)
+            {
+                text.AppendLine();
+                text.AppendLine(id);
+                if (days.Count == 0)
+                {
+                    text.AppendLine("Min: -\nMax: -\nAverage: -\nMedian: -\nMissing: " + seeds + " / " + seeds);
+                    return;
+                }
+                var sorted = days.OrderBy(day => day).ToList();
+                double median = sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2.0;
+                text.AppendLine("Min: " + sorted.First());
+                text.AppendLine("Max: " + sorted.Last());
+                text.AppendLine("Average: " + sorted.Average().ToString("0.00", CultureInfo.InvariantCulture));
+                text.AppendLine("Median: " + median.ToString("0.0", CultureInfo.InvariantCulture));
+                text.AppendLine("Missing: " + (seeds - sorted.Count) + " / " + seeds);
+                text.AppendLine("Days: " + string.Join(", ", sorted.GroupBy(day => day).Select(group => "D" + group.Key + "=" + group.Count()).ToArray()));
+            }
+
+            private static int MaxNormalStreak(IList<DaySimulationResult> results, string id)
+                => MaxConsecutive(results.Select(day => day.NormalActionIds.Contains(id)));
+
+            private static void AddIssues(IDictionary<int, List<string>> target, int seed, IEnumerable<string> issues)
+            {
+                if (!target.TryGetValue(seed, out List<string> existing)) target[seed] = existing = new List<string>();
+                foreach (string issue in issues)
+                    if (!existing.Contains(issue)) existing.Add(issue);
+            }
+
+            private static string BuildSeedDetail(int seed, IList<DaySimulationResult> results, ObservationSimulationState state,
+                IDictionary<string, int> knownDays, IEnumerable<string> seedFailures, IEnumerable<string> seedWarnings)
+            {
+                var days = knownDays ?? (results == null
+                    ? new Dictionary<string, int>()
+                    : results.Where(day => !string.IsNullOrEmpty(day.MajorEventId)).ToDictionary(day => day.MajorEventId, day => day.Day));
+                return "Seed " + seed +
+                       " FAIL=[" + string.Join("; ", seedFailures.ToArray()) + "] WARNING=[" + string.Join("; ", seedWarnings.ToArray()) +
+                       "] Events=[" + string.Join(", ", days.OrderBy(x => x.Value).Select(x => x.Key + "=D" + x.Value).ToArray()) +
+                       "] Final=[" + (state == null ? "-" : state.Relationship.ToString()) + "]";
+            }
+
+            private static string FormatSeedList(IEnumerable<int> seeds)
+            {
+                int[] values = seeds.Distinct().OrderBy(seed => seed).ToArray();
+                return values.Length == 0 ? "none" : string.Join(",", values.Select(seed => seed.ToString()).ToArray());
+            }
         }
     }
 }
