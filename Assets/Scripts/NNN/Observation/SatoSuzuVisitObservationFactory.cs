@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -7,6 +7,10 @@ namespace NNN
     /// <summary>v0.1で対象とする佐藤美咲×スズ×訪問のデータ駆動ルート。</summary>
     public static class SatoSuzuVisitObservationFactory
     {
+        /// <summary>
+        /// 既存テストプロファイルのH02（佐藤美咲）と、観察用のスズ、通常・Majorイベントを接続する。
+        /// 現段階では調整値をコードで組み立てるが、返却型はScriptableObjectなので将来の.asset化でも実行側は共通化できる。
+        /// </summary>
         public static ObservationRouteDefinition CreateRoute()
         {
             var profile = NNNTestDataFactory.CreateRuntimeProfile();
@@ -20,6 +24,10 @@ namespace NNN
             return route;
         }
 
+        /// <summary>
+        /// 候補猫一覧へ影響を与えず、今回の観察ルートだけで使うスズを作る。
+        /// cautious_contactは猫パンチ、exploratoryは室内探索・物落としの成立条件に利用する。
+        /// </summary>
         private static CatDefinition CreateSuzu()
         {
             var cat = ScriptableObject.CreateInstance<CatDefinition>();
@@ -36,6 +44,7 @@ namespace NNN
             return cat;
         }
 
+        /// <summary>既存CatDefinition.HasTraitで照合できる最小Trait定義を生成する。</summary>
         private static TraitDefinition Trait(string id, string name)
         {
             var value = ScriptableObject.CreateInstance<TraitDefinition>();
@@ -45,6 +54,10 @@ namespace NNN
             return value;
         }
 
+        /// <summary>
+        /// 関係を直接進展させず、現在状態を画面に表す日常行動を登録する。
+        /// 遠距離／近距離や屋内行動の条件を分け、DAY1とDAY30で選ばれる行動の質を変える。
+        /// </summary>
         private static void AddNormalEvents(List<ObservationEventDefinition> events)
         {
             events.Add(Normal("NORMAL_CAT_WATCH_HUMAN", 70, Log(8.2f, ObservationActor.Cat, "CAT_WATCH_HUMAN", "スズが離れた場所から佐藤を見ている"), WarinessAtLeast(CatWarinessState.Medium)));
@@ -59,8 +72,13 @@ namespace NNN
             events.Add(Normal("NORMAL_SHARED_ROOM", 70, Log(21.0f, ObservationActor.Environment, "SHARED_ROOM", "佐藤とスズが同じ部屋にいる"), WarinessAtMost(CatWarinessState.Low), SettlementAtLeast(SettlementState.Territory)));
         }
 
+        /// <summary>
+        /// DAY1の訪問からDAY30の日常化までを、期間と状態・履歴条件で接続する。
+        /// 日付は候補化できる幅であり固定発生日ではない。実際の日はDirectorの間隔判断とSeedで決まる。
+        /// </summary>
         private static void AddMajorEvents(List<ObservationEventDefinition> events)
         {
+            // 訪問で起きた観測事実だけを初期履歴にし、「訪問だから警戒度が下がる」といった直接補正は行わない。
             events.Add(Event("VISIT_FIRST_CONTACT", ObservationEventCategory.Milestone, 1, 1, 1000,
                 Change(HumanToCatState.Watch, CatWarinessState.High, SettlementState.Visiting),
                 History(RelationshipHistoryFlag.Seen, RelationshipHistoryFlag.Approached, RelationshipHistoryFlag.Watered),
@@ -92,6 +110,7 @@ namespace NNN
                 new[] { HistoryHas(RelationshipHistoryFlag.SniffedHuman), WarinessAtMost(CatWarinessState.Low) },
                 Log(19.2f, ObservationActor.Human, "HUMAN_TOUCH", "佐藤の指先がスズの額に触れる"),
                 Log(19.3f, ObservationActor.Cat, "CAT_REMAIN", "スズがその場に残る")));
+            // 触れられる関係になったことを前提に発生する問題であり、関係不成立を示すFailureではない。
             events.Add(Event("PROBLEM_OVERTOUCH_CAT_PUNCH", ObservationEventCategory.Problem, 14, 19, 110,
                 Change(HumanToCatState.Watch, CatWarinessState.Medium, null), null, Memories(RelationshipMemory.OverTouched),
                 new[] { HistoryHas(RelationshipHistoryFlag.Touched), HumanAtLeast(HumanToCatState.Approach), CatTrait("cautious_contact") },
@@ -99,6 +118,7 @@ namespace NNN
                 AttentionLog(19.5f, ObservationActor.Human, "HUMAN_KEEP_TOUCH", "佐藤がスズの背中を撫で続ける"),
                 AttentionLog(19.6f, ObservationActor.Cat, "CAT_PUNCH", "スズが佐藤の手を前足で払う"),
                 AttentionLog(19.7f, ObservationActor.Cat, "CAT_MOVE_AWAY", "スズが佐藤から少し離れる")));
+            // 猫パンチの記憶を後退で終わらせず、人間が拒否サインを学ぶ回収イベントへ接続する。
             events.Add(Event("REL_RESPECT_SIGNAL", ObservationEventCategory.Relationship, 17, 22, 120,
                 Change(HumanToCatState.Approach, CatWarinessState.Low, null), null, Memories(RelationshipMemory.RespectedSignal),
                 new[] { MemoryHas(RelationshipMemory.OverTouched), MemoryMissing(RelationshipMemory.RespectedSignal), WarinessAtMost(CatWarinessState.Medium) },
@@ -111,6 +131,7 @@ namespace NNN
                 new[] { HistoryHas(RelationshipHistoryFlag.Touched), MemoryHas(RelationshipMemory.RespectedSignal), WarinessAtMost(CatWarinessState.Low) },
                 Log(20.0f, ObservationActor.Human, "HUMAN_MOVE_TOY", "佐藤が紐のおもちゃを床で動かす"),
                 Log(20.1f, ObservationActor.Cat, "CAT_PLAY", "スズが紐を前足で押さえる")));
+            // 状態を大きく悪化させない生活上の問題。後続の環境適応イベントが発生する入口になる。
             events.Add(Event("PROBLEM_OBJECT_DROP", ObservationEventCategory.Problem, 22, 29, 65,
                 Change(null, null, null), null, null,
                 new[] { SettlementAtLeast(SettlementState.Territory), WarinessAtMost(CatWarinessState.Low), CatTrait("exploratory") },
@@ -134,14 +155,20 @@ namespace NNN
                 Log(18.1f, ObservationActor.Cat, "CAT_ROUTINE", "スズが佐藤と同じ部屋へ移動する")));
         }
 
+        /// <summary>繰り返し可能で状態変更を持たないNormalイベントを簡潔に構築する。</summary>
         private static ObservationEventDefinition Normal(string id, int priority, ObservationLogTemplate log, params ObservationEventCondition[] conditions)
             => Event(id, ObservationEventCategory.Normal, 1, 30, priority, Change(null, null, null), null, null, conditions, new[] { log }, true);
 
+        /// <summary>一度だけ発生するMajor Event用の構築入口。</summary>
         private static ObservationEventDefinition Event(string id, ObservationEventCategory category, int earliest, int latest, int priority,
             RelationshipStateChange change, IEnumerable<RelationshipHistoryFlag> history, IEnumerable<RelationshipMemory> memories,
             IEnumerable<ObservationEventCondition> conditions, params ObservationLogTemplate[] logs)
             => Event(id, category, earliest, latest, priority, change, history, memories, conditions, logs, false);
 
+        /// <summary>
+        /// イベント定義の共通項目を設定する。nullの履歴・記憶・条件は「追加／制約なし」として扱う。
+        /// Factory内の全イベントが同じ初期化規則を通ることで設定漏れを局所化する。
+        /// </summary>
         private static ObservationEventDefinition Event(string id, ObservationEventCategory category, int earliest, int latest, int priority,
             RelationshipStateChange change, IEnumerable<RelationshipHistoryFlag> history, IEnumerable<RelationshipMemory> memories,
             IEnumerable<ObservationEventCondition> conditions, ObservationLogTemplate[] logs, bool repeatable)
@@ -163,6 +190,7 @@ namespace NNN
             return value;
         }
 
+        /// <summary>nullable引数をSetフラグへ変換し、変更なしとenumの先頭値を区別する。</summary>
         private static RelationshipStateChange Change(HumanToCatState? human, CatWarinessState? cat, SettlementState? settlement)
             => new RelationshipStateChange { SetHumanToCat = human.HasValue, HumanToCat = human ?? default(HumanToCatState), SetCatWariness = cat.HasValue, CatWariness = cat ?? default(CatWarinessState), SetSettlement = settlement.HasValue, Settlement = settlement ?? default(SettlementState) };
         private static IEnumerable<RelationshipHistoryFlag> History(params RelationshipHistoryFlag[] values) => values;

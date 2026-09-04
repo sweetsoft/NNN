@@ -22,6 +22,10 @@ namespace NNN
         public int RandomSeed { get => randomSeed; set => randomSeed = value; }
         public string LastSimulation => lastSimulation;
 
+        /// <summary>
+        /// Inspectorのコンテキストメニューから30日を一括実行し、最終状態とDAY30候補をシリアライズ欄へ保存する。
+        /// 全日詳細はConsoleへ出し、ゲーム本編のUI・時間進行・アニメーションには干渉しない。
+        /// </summary>
         [ContextMenu("Simulate 30 Days")]
         public void Simulate30Days()
         {
@@ -39,6 +43,7 @@ namespace NNN
             Debug.Log("NNN Observation / 佐藤美咲 × スズ × Visit / Seed " + randomSeed + "\n" + lastSimulation);
         }
 
+        /// <summary>日ごとの通常行動、Major Event、状態を人間が比較しやすい固定形式へ整形する。</summary>
         public static string Format(IList<DaySimulationResult> results)
         {
             var text = new StringBuilder();

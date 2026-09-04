@@ -7,10 +7,15 @@ using UnityEngine;
 
 namespace NNN.Editor
 {
+    /// <summary>
+    /// Editorメニューとbatchmodeの両方から30日シミュレーションを実行する回帰検証入口。
+    /// 企画上重要な順序制約をコード化し、優先度調整時の意図しない破綻を検出する。
+    /// </summary>
     public static class NNNObservationBatchRunner
     {
         private static readonly int[] VerificationSeeds = { 7, 42, 20260904, 8675309 };
 
+        /// <summary>基準Seed一件の全日ログをConsoleへ表示し、手動で傾向を確認する。</summary>
         [MenuItem("NNN/Observation/Simulate 30 Days")]
         public static void Simulate30Days()
         {
@@ -19,6 +24,7 @@ namespace NNN.Editor
             Debug.Log("NNN Observation Seed " + seed + "\n" + ObservationDebugRunner.Format(results));
         }
 
+        /// <summary>複数Seedについて再現性、日数、イベント順、後退と回復、最終到達状態を検証する。</summary>
         [MenuItem("NNN/Observation/Verify Multiple Seeds")]
         public static void VerifyMultipleSeeds()
         {
@@ -32,6 +38,7 @@ namespace NNN.Editor
             Debug.Log("NNN Observation: all seed checks passed.");
         }
 
+        /// <summary>CIやコマンドラインから呼ぶ終了コード付き入口。</summary>
         // Unity -batchmode -executeMethod NNN.Editor.NNNObservationBatchRunner.RunBatchVerification
         public static void RunBatchVerification()
         {
@@ -39,12 +46,17 @@ namespace NNN.Editor
             catch (Exception exception) { Debug.LogException(exception); EditorApplication.Exit(1); }
         }
 
+        /// <summary>RouteとSimulatorを毎回作り直し、別実行の乱数・履歴が混ざらない結果を返す。</summary>
         private static (List<DaySimulationResult> Results, ObservationSimulationState State) Run(int seed)
         {
             var simulator = new ObservationSimulator(SatoSuzuVisitObservationFactory.CreateRoute(), seed);
             return (simulator.Simulate30Days(), simulator.State);
         }
 
+        /// <summary>
+        /// 成功条件を例外として検査する。同じSeedの署名一致は通常行動を含む完全再現性を意味する。
+        /// DayOfが返す値は1始まりなので、結果配列を参照するときだけ-1する。
+        /// </summary>
         private static void Validate(int seed, IList<DaySimulationResult> results, ObservationSimulationState state, IList<DaySimulationResult> repeated)
         {
             string signature = Signature(results);
