@@ -20,6 +20,9 @@ namespace NNN
         public Queue<string> RecentNormalActionIds { get; } = new Queue<string>();
         /// <summary>前日まで何日連続で選ばれたかを保持し、候補条件を変えずに表示の単調さだけを抑える。</summary>
         public Dictionary<string, int> NormalActionStreaks { get; } = new Dictionary<string, int>();
+        public HashSet<string> PlayerKnowledgeFlags { get; } = new HashSet<string>();
+        public List<ObservationSimulationModifier> Modifiers { get; } = new List<ObservationSimulationModifier>();
+        public List<ObservationPlayerActionRecord> PlayerActionHistory { get; } = new List<ObservationPlayerActionRecord>();
     }
 
     /// <summary>イベント期間、単発性、関係状態、履歴、記憶、人物・猫TraitをAND条件で評価する。</summary>
@@ -73,6 +76,11 @@ namespace NNN
         /// Major Eventを一日最大一件選ぶ。Milestone、翌日抑制、期限補正、発生間隔、優先度の順に判断する。
         /// </summary>
         public ObservationEventDefinition SelectMajorEvent(int day, IList<ObservationEventDefinition> candidates, ObservationSimulationState state)
+            => SelectMajorEvent(day, candidates, state, null);
+
+        /// <summary>有効Modifierを候補スコアへ加える逐次実行用入口。Modifierなしでは従来入口と同じ乱数列を使う。</summary>
+        public ObservationEventDefinition SelectMajorEvent(int day, IList<ObservationEventDefinition> candidates,
+            ObservationSimulationState state, IList<ObservationSimulationModifier> modifiers)
         {
             // DAY1/DAY30は通常のクールダウンや確率に左右されない観察期間の境界イベント。
             var milestone = candidates.Where(x => x.Category == ObservationEventCategory.Milestone).OrderByDescending(x => x.BasePriority).FirstOrDefault();
@@ -104,6 +112,7 @@ namespace NNN
                 {
                     Event = x,
                     Score = x.BasePriority + PhaseBonus(day, x) + DeadlineBonus(day, x) + CoreBonus(day, x) +
+                        ModifierBonus(day, x, modifiers) +
                         OptionalOpportunityBonus(x, nearestCoreDeadline) +
                         (gap >= 4 && x.Category == ObservationEventCategory.Relationship ? 25 : 0) + random.Next(0, 21)
                 })
@@ -111,6 +120,9 @@ namespace NNN
                 .ThenBy(x => x.Event.Id)
                 .First().Event;
         }
+
+        private static int ModifierBonus(int day, ObservationEventDefinition definition, IList<ObservationSimulationModifier> modifiers)
+            => modifiers == null ? 0 : modifiers.Where(x => x != null && x.IsActive(day, definition.Id)).Sum(x => x.PriorityBonus);
 
         /// <summary>成立中の通常候補から1～3件を選び、直近6件に含まれる行動へ減点して連続表示を避ける。</summary>
         public List<ObservationEventDefinition> SelectNormalActions(IList<ObservationEventDefinition> candidates, ObservationSimulationState state)
@@ -166,7 +178,14 @@ namespace NNN
     {
         private readonly ObservationRouteDefinition route;
         private readonly ObservationDirector director;
+        private readonly List<ScheduledObservationEvent> pendingEvents = new List<ScheduledObservationEvent>();
+        private readonly Dictionary<string, int> normalSelectionOrder = new Dictionary<string, int>();
+        private DaySimulationResult currentResult;
+        private bool generatedSinceLastAction;
+        private int nextSelectionOrder;
         public ObservationSimulationState State { get; } = new ObservationSimulationState();
+        public ObservationDayContext DayContext { get; private set; }
+        public int PendingEventCount => pendingEvents.Count;
         /// <summary>同じRouteとSeedなら同じ乱数列を使い、30日結果を再現する。</summary>
         public ObservationSimulator(ObservationRouteDefinition route, int seed) { this.route = route ?? throw new ArgumentNullException(nameof(route)); director = new ObservationDirector(seed); }
 
@@ -176,36 +195,137 @@ namespace NNN
         /// </summary>
         public DaySimulationResult SimulateDay(int day)
         {
-            if (day != State.CurrentDay + 1 || day < 1 || day > 30) throw new ArgumentOutOfRangeException(nameof(day), "Days must be simulated once, in order, from DAY1 to DAY30.");
-            State.CurrentDay = day;
-            // 状態更新前の同一スナップショットから全カテゴリの候補を作り、一日の途中で候補条件を変えない。
-            var eligible = route.Events.Where(x => ObservationConditionEvaluator.Evaluate(x, route, State)).ToList();
-            var normal = eligible.Where(x => x.Category == ObservationEventCategory.Normal).ToList();
-            var selectedMajor = director.SelectMajorEvent(day, eligible.Where(x => x.Category != ObservationEventCategory.Normal).ToList(), State);
-            var selectedNormal = director.SelectNormalActions(normal, State);
-            var result = new DaySimulationResult
-            {
-                Day = day, MajorEventId = selectedMajor != null ? selectedMajor.Id : null, StateBefore = State.Relationship.Clone(),
-                NormalCandidates = normal.Select(x => x.Id).ToList(),
-                RelationshipCandidates = eligible.Where(x => x.Category == ObservationEventCategory.Relationship).Select(x => x.Id).ToList(),
-                ProblemCandidates = eligible.Where(x => x.Category == ObservationEventCategory.Problem).Select(x => x.Id).ToList()
-            };
-            // Normalは関係状態を進めない前提。Majorだけが履歴・記憶・関係状態を更新する。
-            foreach (var action in selectedNormal) Apply(action, result);
-            UpdateNormalActionStreaks(selectedNormal);
-            if (selectedMajor != null) Apply(selectedMajor, result);
+            BeginDay(day);
+            while (GenerateNextEvent() != null) ExecuteNextEvent();
+            return EndDay();
+        }
 
-            // イベントの選択・状態更新は従来のNormal→Major順を維持し、すべての適用が終わってから
-            // 表示用ログだけをゲーム内時刻順へ並べる。これにより乱数消費や関係状態の因果へ影響を与えない。
-            SortLogEntriesChronologically(result.LogEntries);
-            result.StateAfter = State.Relationship.Clone();
-            return result;
+        /// <summary>日次Runtimeを初期化する。未来候補の選択は最初のGenerateNextEventまで行わない。</summary>
+        public void BeginDay(int day)
+        {
+            if (DayContext != null) throw new InvalidOperationException("The current observation day has not ended.");
+            if (day != State.CurrentDay + 1 || day < 1 || day > 30)
+                throw new ArgumentOutOfRangeException(nameof(day), "Days must be simulated once, in order, from DAY1 to DAY30.");
+            State.CurrentDay = day;
+            DayContext = new ObservationDayContext { Day = day, CurrentTime = 0f };
+            currentResult = new DaySimulationResult { Day = day, StateBefore = State.Relationship.Clone() };
+            pendingEvents.Clear();
+            normalSelectionOrder.Clear();
+            generatedSinceLastAction = false;
+            nextSelectionOrder = 0;
+        }
+
+        /// <summary>
+        /// 呼出時点の状態と時刻から次イベントを返す。選択済みの残りはAction時に破棄されるため、過去だけが確定する。
+        /// </summary>
+        public ObservationEventDefinition GenerateNextEvent()
+        {
+            EnsureDayActive();
+            if (pendingEvents.Count > 0) return pendingEvents[0].Definition;
+            if (generatedSinceLastAction) return null;
+            generatedSinceLastAction = true;
+
+            var eligible = route.Events.Where(x => ObservationConditionEvaluator.Evaluate(x, route, State))
+                .Where(x => !DayContext.ExecutedEventIds.Contains(x.Id) && EventStartTime(x) >= DayContext.CurrentTime)
+                .ToList();
+            var normal = eligible.Where(x => x.Category == ObservationEventCategory.Normal).ToList();
+            AddCandidates(currentResult.NormalCandidates, normal);
+            AddCandidates(currentResult.RelationshipCandidates, eligible.Where(x => x.Category == ObservationEventCategory.Relationship));
+            AddCandidates(currentResult.ProblemCandidates, eligible.Where(x => x.Category == ObservationEventCategory.Problem));
+
+            // 呼出順は旧SimulateDayと同じMajor→Normalとし、Actionなしの乱数消費順を維持する。
+            ObservationEventDefinition major = DayContext.HasMajorEventOccurred ? null : director.SelectMajorEvent(
+                DayContext.Day, eligible.Where(x => x.Category != ObservationEventCategory.Normal).ToList(), State, State.Modifiers);
+            List<ObservationEventDefinition> selectedNormal = director.SelectNormalActions(normal, State);
+            foreach (ObservationEventDefinition selected in selectedNormal)
+            {
+                normalSelectionOrder[selected.Id] = nextSelectionOrder;
+                pendingEvents.Add(new ScheduledObservationEvent(selected, nextSelectionOrder++));
+            }
+            if (major != null) pendingEvents.Add(new ScheduledObservationEvent(major, nextSelectionOrder++));
+            pendingEvents.Sort((left, right) =>
+            {
+                int time = EventStartTime(left.Definition).CompareTo(EventStartTime(right.Definition));
+                return time != 0 ? time : left.SelectionOrder.CompareTo(right.SelectionOrder);
+            });
+            return pendingEvents.Count == 0 ? null : pendingEvents[0].Definition;
+        }
+
+        /// <summary>GenerateNextEventで得た先頭イベント一件だけを確定し、現在時刻と既存状態へ反映する。</summary>
+        public ObservationEventDefinition ExecuteNextEvent()
+        {
+            EnsureDayActive();
+            if (pendingEvents.Count == 0 && GenerateNextEvent() == null) return null;
+            ScheduledObservationEvent scheduled = pendingEvents[0];
+            pendingEvents.RemoveAt(0);
+            ObservationEventDefinition definition = scheduled.Definition;
+            Apply(definition, currentResult);
+            DayContext.ExecutedEventIds.Add(definition.Id);
+            // CurrentTimeはイベント開始時刻のカーソル。イベント内の複数ログは一つの原子的な出来事として同時に確定する。
+            DayContext.CurrentTime = Math.Max(DayContext.CurrentTime, EventStartTime(definition));
+            if (definition.Category != ObservationEventCategory.Normal)
+            {
+                DayContext.HasMajorEventOccurred = true;
+                currentResult.MajorEventId = definition.Id;
+                // 同日Major上限を保証するため、まだ実行していないMajor候補は破棄する。
+                pendingEvents.RemoveAll(x => x.Definition.Category != ObservationEventCategory.Normal);
+            }
+            return definition;
+        }
+
+        /// <summary>テスト用NNN ACTIONを現在時刻へ記録し、未実行イベントだけを破棄して次回生成時に再評価する。</summary>
+        public void ApplyNNNAction(string actionId, float time)
+        {
+            EnsureDayActive();
+            if (time < DayContext.CurrentTime || time > 24f) throw new ArgumentOutOfRangeException(nameof(time));
+            var record = new ObservationPlayerActionRecord { Day = DayContext.Day, Time = time, ActionId = actionId };
+            DayContext.CurrentTime = time;
+            DayContext.PlayerActionRecords.Add(record);
+            State.PlayerActionHistory.Add(record);
+            if (actionId == "CAT_INVESTIGATION_TEST")
+            {
+                State.PlayerKnowledgeFlags.Add("KNOW_SUZU_RETURNS_HOME");
+            }
+            else if (actionId == "HUMAN_OPERATION_SIGNAL_HINT_TEST")
+            {
+                State.Modifiers.Add(new ObservationSimulationModifier
+                {
+                    Id = "HUMAN_SIGNAL_HINT", AppliedDay = DayContext.Day, AppliedTime = time,
+                    ActiveFromDay = DayContext.Day + 1, ExpireDay = DayContext.Day + 3,
+                    TargetEventId = "REL_RESPECT_SIGNAL", PriorityBonus = 80
+                });
+            }
+            else throw new ArgumentException("Unknown NNN ACTION: " + actionId, nameof(actionId));
+
+            pendingEvents.Clear();
+            generatedSinceLastAction = false;
+        }
+
+        /// <summary>当日結果を確定し、表示ログと旧NormalActionIds順、翌日用Recent状態を整える。</summary>
+        public DaySimulationResult EndDay()
+        {
+            EnsureDayActive();
+            if (pendingEvents.Count > 0) throw new InvalidOperationException("Execute pending events before ending the day.");
+            currentResult.NormalActionIds = currentResult.NormalActionIds.OrderBy(id => normalSelectionOrder[id]).ToList();
+            UpdateNormalActionStreaks(currentResult.NormalActionIds);
+            foreach (string id in currentResult.NormalActionIds)
+            {
+                State.RecentNormalActionIds.Enqueue(id);
+                while (State.RecentNormalActionIds.Count > 6) State.RecentNormalActionIds.Dequeue();
+            }
+            SortLogEntriesChronologically(currentResult.LogEntries);
+            currentResult.StateAfter = State.Relationship.Clone();
+            DayContext.IsComplete = true;
+            DaySimulationResult completed = currentResult;
+            DayContext = null;
+            currentResult = null;
+            return completed;
         }
 
         /// <summary>今日選ばれた行動だけ連続数を増やし、選ばれなかった行動は0へ戻す。</summary>
-        private void UpdateNormalActionStreaks(IList<ObservationEventDefinition> selected)
+        private void UpdateNormalActionStreaks(IList<string> selectedIdsInOrder)
         {
-            var selectedIds = new HashSet<string>(selected.Select(x => x.Id));
+            var selectedIds = new HashSet<string>(selectedIdsInOrder);
             foreach (string id in State.NormalActionStreaks.Keys.ToList())
                 if (!selectedIds.Contains(id)) State.NormalActionStreaks[id] = 0;
             foreach (string id in selectedIds)
@@ -242,9 +362,6 @@ namespace NNN
             if (definition.Category == ObservationEventCategory.Normal)
             {
                 result.NormalActionIds.Add(definition.Id);
-                State.RecentNormalActionIds.Enqueue(definition.Id);
-                // 件数ベースの短い履歴で十分なため、日付付きの大規模な行動履歴は持たない。
-                while (State.RecentNormalActionIds.Count > 6) State.RecentNormalActionIds.Dequeue();
             }
             else
             {
@@ -257,6 +374,31 @@ namespace NNN
             // 定義を直接UIへ渡さず実行結果へ複製し、表示とシミュレーションの依存を分離する。
             foreach (var log in definition.Logs)
                 result.LogEntries.Add(new ObservationLogEntry { Time = log.Time, Actor = log.Actor, ActionId = log.ActionId, Text = log.Text, Importance = log.Importance });
+        }
+
+        private void EnsureDayActive()
+        {
+            if (DayContext == null) throw new InvalidOperationException("BeginDay must be called first.");
+        }
+
+        private static float EventStartTime(ObservationEventDefinition definition)
+            => definition.Logs.Count == 0 ? 0f : definition.Logs.Min(x => x.Time);
+
+        private static void AddCandidates(ICollection<string> target, IEnumerable<ObservationEventDefinition> definitions)
+        {
+            foreach (ObservationEventDefinition definition in definitions)
+                if (!target.Contains(definition.Id)) target.Add(definition.Id);
+        }
+
+        private sealed class ScheduledObservationEvent
+        {
+            public readonly ObservationEventDefinition Definition;
+            public readonly int SelectionOrder;
+            public ScheduledObservationEvent(ObservationEventDefinition definition, int selectionOrder)
+            {
+                Definition = definition;
+                SelectionOrder = selectionOrder;
+            }
         }
     }
 }

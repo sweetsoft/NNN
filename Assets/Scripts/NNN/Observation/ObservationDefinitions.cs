@@ -145,6 +145,42 @@ namespace NNN
     }
 
     [Serializable]
+    /// <summary>後からSaveDataへ移せる、プレイヤーが実行したNNN ACTIONの最小記録。</summary>
+    public sealed class ObservationPlayerActionRecord
+    {
+        public int Day;
+        public float Time;
+        public string ActionId;
+    }
+
+    [Serializable]
+    /// <summary>未来イベントを固定せず、指定期間中の候補Priorityだけを変える一時効果。</summary>
+    public sealed class ObservationSimulationModifier
+    {
+        public string Id;
+        public int AppliedDay;
+        public float AppliedTime;
+        public int ActiveFromDay;
+        public int ExpireDay;
+        public string TargetEventId;
+        public int PriorityBonus;
+
+        public bool IsActive(int day, string eventId)
+            => day >= ActiveFromDay && day <= ExpireDay && TargetEventId == eventId;
+    }
+
+    /// <summary>逐次実行中の一日だけ存在し、EndDay後は破棄されるRuntime情報。</summary>
+    public sealed class ObservationDayContext
+    {
+        public int Day { get; internal set; }
+        public float CurrentTime { get; internal set; }
+        public bool HasMajorEventOccurred { get; internal set; }
+        public bool IsComplete { get; internal set; }
+        public HashSet<string> ExecutedEventIds { get; } = new HashSet<string>();
+        public List<ObservationPlayerActionRecord> PlayerActionRecords { get; } = new List<ObservationPlayerActionRecord>();
+    }
+
+    [Serializable]
     /// <summary>
     /// 一日分の純粋な出力。通常行動、Major Event、ログ、状態前後をUIやテストがまとめて利用できる。
     /// 候補一覧は、なぜ選ばれた／選ばれなかったかをInspectorで追跡するために保持する。
