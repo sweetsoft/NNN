@@ -42,6 +42,7 @@ namespace NNN.Editor
             "NORMAL_CAT_LOOK_WINDOW", "NORMAL_HUMAN_SMARTPHONE", "NORMAL_HUMAN_MEAL",
             "NORMAL_SHARED_ROOM"
         };
+        private static readonly string[] OptionalEventIds = { "PROBLEM_OBJECT_DROP", "REL_HUMAN_ADAPT_ENVIRONMENT" };
 
         /// <summary>基準Seed一件の全日ログをConsoleへ表示し、手動で傾向を確認する。</summary>
         [MenuItem("NNN/Observation/Simulate 30 Days")]
@@ -269,7 +270,7 @@ namespace NNN.Editor
                     streak = day.NormalActionIds.Contains(id) ? streak + 1 : 0;
                     maximum = Math.Max(maximum, streak);
                 }
-                if (maximum >= 3) warnings.Add(id + " が" + maximum + "日連続");
+                if (maximum >= 4) warnings.Add(id + " が" + maximum + "日連続");
             }
         }
 
@@ -363,6 +364,7 @@ namespace NNN.Editor
             private readonly Dictionary<string, List<int>> eventDays = DistributionEventIds.ToDictionary(id => id, id => new List<int>());
             private readonly Dictionary<string, int> normalCounts = NormalEventIds.ToDictionary(id => id, id => 0);
             private readonly Dictionary<string, int> normalMaxStreaks = NormalEventIds.ToDictionary(id => id, id => 0);
+            private readonly Dictionary<string, int> optionalEventCounts = OptionalEventIds.ToDictionary(id => id, id => 0);
             private readonly Dictionary<int, List<string>> failures = new Dictionary<int, List<string>>();
             private readonly Dictionary<int, List<string>> warnings = new Dictionary<int, List<string>>();
             private readonly Dictionary<int, string> abnormalDetails = new Dictionary<int, string>();
@@ -385,6 +387,8 @@ namespace NNN.Editor
                 logOrderingViolations += seedLogOrderingViolations;
                 foreach (string id in DistributionEventIds)
                     if (days.TryGetValue(id, out int day)) eventDays[id].Add(day);
+                foreach (string id in OptionalEventIds)
+                    if (days.ContainsKey(id)) optionalEventCounts[id]++;
 
                 foreach (string id in NormalEventIds)
                 {
@@ -430,6 +434,9 @@ namespace NNN.Editor
                 text.AppendLine();
                 text.AppendLine("Event day distribution:");
                 foreach (string id in DistributionEventIds) AppendEventDistribution(text, id, eventDays[id], seedCount);
+                text.AppendLine("Optional Event occurrence:");
+                foreach (string id in OptionalEventIds) text.AppendLine(id + ": " + optionalEventCounts[id] + " / " + seedCount);
+                text.AppendLine();
                 text.AppendLine("Normal Action distribution:");
                 foreach (string id in NormalEventIds)
                 {

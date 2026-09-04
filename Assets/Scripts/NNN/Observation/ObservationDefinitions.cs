@@ -18,6 +18,8 @@ namespace NNN
     public enum RelationshipMemory { HumanWaited, SafeEntry, OverTouched, RespectedSignal, HumanAdaptedEnvironment }
     /// <summary>通常描写と、一日最大一件のMajor Eventを分類する。</summary>
     public enum ObservationEventCategory { Normal, Relationship, Problem, Milestone }
+    /// <summary>カテゴリとは独立した物語上の役割。Coreは期限切れで関係進行を止めてはいけないイベントを表す。</summary>
+    public enum ObservationEventRole { Core, Optional }
     /// <summary>観察ログ上で動作主体として表示する対象。</summary>
     public enum ObservationActor { Human, Cat, Environment }
     /// <summary>UI側が強調や停止を判断するための重要度。ロジック自身は時間を停止しない。</summary>
@@ -107,6 +109,7 @@ namespace NNN
     public sealed class ObservationEventDefinition : IdDefinition
     {
         public ObservationEventCategory Category;
+        public ObservationEventRole Role = ObservationEventRole.Optional;
         [Range(1, 30)] public int EarliestDay = 1;
         [Range(1, 30)] public int LatestDay = 30;
         public int BasePriority = 50;

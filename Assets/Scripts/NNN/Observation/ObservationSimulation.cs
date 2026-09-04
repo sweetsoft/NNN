@@ -18,6 +18,8 @@ namespace NNN
         public HashSet<RelationshipMemory> MemoryFlags { get; } = new HashSet<RelationshipMemory>();
         public HashSet<string> OccurredEventIds { get; } = new HashSet<string>();
         public Queue<string> RecentNormalActionIds { get; } = new Queue<string>();
+        /// <summary>前日まで何日連続で選ばれたかを保持し、候補条件を変えずに表示の単調さだけを抑える。</summary>
+        public Dictionary<string, int> NormalActionStreaks { get; } = new Dictionary<string, int>();
     }
 
     /// <summary>イベント期間、単発性、関係状態、履歴、記憶、人物・猫TraitをAND条件で評価する。</summary>
@@ -75,20 +77,34 @@ namespace NNN
             // DAY1/DAY30は通常のクールダウンや確率に左右されない観察期間の境界イベント。
             var milestone = candidates.Where(x => x.Category == ObservationEventCategory.Milestone).OrderByDescending(x => x.BasePriority).FirstOrDefault();
             if (milestone != null) return milestone;
-            // Major Eventの翌日は通常描写だけにし、関係変化を毎日連続させない。
-            if (day - state.LastMajorEventDay <= 1 || candidates.Count == 0) return null;
-            // 条件を満たしたまま発生期間を過ぎるイベントを取りこぼさないため、最終日は確率判定を省略する。
-            var expiring = candidates.Where(x => x.LatestDay == day).OrderByDescending(x => x.BasePriority).ThenBy(x => x.Id).FirstOrDefault();
-            if (expiring != null) return expiring;
+            if (candidates.Count == 0) return null;
+
+            // 通常はMajor翌日の休止を守る。Coreの残り日数が1日以下の場合だけ例外とし、
+            // Optionalが直前日に枠を使っても主軸イベントが期限切れになる事態を防ぐ。
+            var urgentCore = candidates.Where(x => x.Role == ObservationEventRole.Core && x.LatestDay - day <= 2).ToList();
+            bool cooldownCriticalCoreExists = urgentCore.Any(x => x.LatestDay - day <= 1);
+            if (day - state.LastMajorEventDay <= 1 && !cooldownCriticalCoreExists) return null;
             int gap = day - state.LastMajorEventDay;
+            int nearestCoreDeadline = candidates.Where(x => x.Role == ObservationEventRole.Core)
+                .Select(x => x.LatestDay - day).DefaultIfEmpty(int.MaxValue).Min();
             // 空白が長いほどMajor Eventを出しやすくするが、通常行動だけの日も残す。
             double chance = gap >= 4 ? 0.9 : gap == 3 ? 0.68 : 0.42;
-            if (random.NextDouble() > chance) return null;
-            // BasePriorityとフェーズ補正を支配的にし、0～20の乱数では大差のある物語順を逆転させない。
+            // 残り2日から段階的に確率を上げ、最終日だけ確実に保護する。
+            // 期限保護をDAY固定にせず、同時に特定日へ集中することも避ける。
+            int nearestUrgentDeadline = urgentCore.Select(x => x.LatestDay - day).DefaultIfEmpty(int.MaxValue).Min();
+            double effectiveChance = nearestUrgentDeadline <= 0 ? 1.0
+                : nearestUrgentDeadline == 1 ? 0.72
+                : nearestUrgentDeadline == 2 ? 0.45
+                : chance;
+            if (random.NextDouble() > effectiveChance) return null;
+
+            // DeadlineBonusは発生可能期間の進捗に対して二次曲線で滑らかに増える。
+            // CoreBonusも同じ進捗で増やし、序盤はOptionalが競合でき、終盤だけ主軸を優先する。
             return candidates.Select(x => new
                 {
                     Event = x,
-                    Score = x.BasePriority + PhaseBonus(day, x) +
+                    Score = x.BasePriority + PhaseBonus(day, x) + DeadlineBonus(day, x) + CoreBonus(day, x) +
+                        OptionalOpportunityBonus(x, nearestCoreDeadline) +
                         (gap >= 4 && x.Category == ObservationEventCategory.Relationship ? 25 : 0) + random.Next(0, 21)
                 })
                 .OrderByDescending(x => x.Score)
@@ -100,8 +116,40 @@ namespace NNN
         public List<ObservationEventDefinition> SelectNormalActions(IList<ObservationEventDefinition> candidates, ObservationSimulationState state)
         {
             int count = random.Next(1, 4);
-            return candidates.Select(x => new { Event = x, Score = x.BasePriority - (state.RecentNormalActionIds.Contains(x.Id) ? 35 : 0) + random.Next(0, 21) })
+            return candidates
+                // 3日続いた行動は一日だけ休ませる。状態条件を満たした候補集合に対して行うため、不適切な行動は復活しない。
+                .Where(x => !state.NormalActionStreaks.TryGetValue(x.Id, out int streak) || streak < 3)
+                .Select(x => new { Event = x, Score = x.BasePriority - RecentNormalPenalty(state, x.Id) + random.Next(0, 21) })
                 .OrderByDescending(x => x.Score).Take(count).Select(x => x.Event).ToList();
+        }
+
+        private static int RecentNormalPenalty(ObservationSimulationState state, string id)
+        {
+            if (!state.NormalActionStreaks.TryGetValue(id, out int streak)) return state.RecentNormalActionIds.Contains(id) ? 20 : 0;
+            return streak >= 2 ? 75 : 45;
+        }
+
+        private static int DeadlineBonus(int day, ObservationEventDefinition definition)
+        {
+            float progress = DeadlineProgress(day, definition);
+            float maximum = definition.Role == ObservationEventRole.Core ? 120f : 60f;
+            return (int)Math.Round(maximum * progress * progress, MidpointRounding.AwayFromZero);
+        }
+
+        private static int CoreBonus(int day, ObservationEventDefinition definition)
+            => definition.Role == ObservationEventRole.Core
+                ? (int)Math.Round(100f * DeadlineProgress(day, definition), MidpointRounding.AwayFromZero)
+                : 0;
+
+        /// <summary>Core期限に十分な余白がある日だけOptionalへ出番を与え、期限間際は補正を外す。</summary>
+        private static int OptionalOpportunityBonus(ObservationEventDefinition definition, int nearestCoreDeadline)
+            => definition.Role == ObservationEventRole.Optional && nearestCoreDeadline >= 3 ? 100 : 0;
+
+        private static float DeadlineProgress(int day, ObservationEventDefinition definition)
+        {
+            int duration = definition.LatestDay - definition.EarliestDay;
+            if (duration <= 0) return 1f;
+            return Math.Max(0f, Math.Min(1f, (float)(day - definition.EarliestDay) / duration));
         }
 
         /// <summary>序盤・中盤・終盤で見せたい変化へ小さな補正を加える。特定DAYへの固定配置ではない。</summary>
@@ -144,6 +192,7 @@ namespace NNN
             };
             // Normalは関係状態を進めない前提。Majorだけが履歴・記憶・関係状態を更新する。
             foreach (var action in selectedNormal) Apply(action, result);
+            UpdateNormalActionStreaks(selectedNormal);
             if (selectedMajor != null) Apply(selectedMajor, result);
 
             // イベントの選択・状態更新は従来のNormal→Major順を維持し、すべての適用が終わってから
@@ -151,6 +200,16 @@ namespace NNN
             SortLogEntriesChronologically(result.LogEntries);
             result.StateAfter = State.Relationship.Clone();
             return result;
+        }
+
+        /// <summary>今日選ばれた行動だけ連続数を増やし、選ばれなかった行動は0へ戻す。</summary>
+        private void UpdateNormalActionStreaks(IList<ObservationEventDefinition> selected)
+        {
+            var selectedIds = new HashSet<string>(selected.Select(x => x.Id));
+            foreach (string id in State.NormalActionStreaks.Keys.ToList())
+                if (!selectedIds.Contains(id)) State.NormalActionStreaks[id] = 0;
+            foreach (string id in selectedIds)
+                State.NormalActionStreaks[id] = State.NormalActionStreaks.TryGetValue(id, out int streak) ? streak + 1 : 1;
         }
 
         /// <summary>

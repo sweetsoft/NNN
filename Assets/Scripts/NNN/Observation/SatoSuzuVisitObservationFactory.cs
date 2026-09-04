@@ -157,19 +157,20 @@ namespace NNN
 
         /// <summary>繰り返し可能で状態変更を持たないNormalイベントを簡潔に構築する。</summary>
         private static ObservationEventDefinition Normal(string id, int priority, ObservationLogTemplate log, params ObservationEventCondition[] conditions)
-            => Event(id, ObservationEventCategory.Normal, 1, 30, priority, Change(null, null, null), null, null, conditions, new[] { log }, true);
+            => Event(id, ObservationEventCategory.Normal, ObservationEventRole.Optional, 1, 30, priority, Change(null, null, null), null, null, conditions, new[] { log }, true);
 
         /// <summary>一度だけ発生するMajor Event用の構築入口。</summary>
         private static ObservationEventDefinition Event(string id, ObservationEventCategory category, int earliest, int latest, int priority,
             RelationshipStateChange change, IEnumerable<RelationshipHistoryFlag> history, IEnumerable<RelationshipMemory> memories,
             IEnumerable<ObservationEventCondition> conditions, params ObservationLogTemplate[] logs)
-            => Event(id, category, earliest, latest, priority, change, history, memories, conditions, logs, false);
+            => Event(id, category, IsOptionalEvent(id) ? ObservationEventRole.Optional : ObservationEventRole.Core,
+                earliest, latest, priority, change, history, memories, conditions, logs, false);
 
         /// <summary>
         /// イベント定義の共通項目を設定する。nullの履歴・記憶・条件は「追加／制約なし」として扱う。
         /// Factory内の全イベントが同じ初期化規則を通ることで設定漏れを局所化する。
         /// </summary>
-        private static ObservationEventDefinition Event(string id, ObservationEventCategory category, int earliest, int latest, int priority,
+        private static ObservationEventDefinition Event(string id, ObservationEventCategory category, ObservationEventRole role, int earliest, int latest, int priority,
             RelationshipStateChange change, IEnumerable<RelationshipHistoryFlag> history, IEnumerable<RelationshipMemory> memories,
             IEnumerable<ObservationEventCondition> conditions, ObservationLogTemplate[] logs, bool repeatable)
         {
@@ -178,6 +179,7 @@ namespace NNN
             value.Id = id;
             value.DisplayName = id;
             value.Category = category;
+            value.Role = role;
             value.EarliestDay = earliest;
             value.LatestDay = latest;
             value.BasePriority = priority;
@@ -189,6 +191,13 @@ namespace NNN
             value.Logs.AddRange(logs);
             return value;
         }
+
+        /// <summary>
+        /// Vertical Sliceの主軸から外れる生活上の枝イベントだけをOptionalとする。
+        /// Problem/Relationshipという表示カテゴリから役割を推測せず、猫パンチなど必須ProblemをCoreに保つ。
+        /// </summary>
+        private static bool IsOptionalEvent(string id)
+            => id == "PROBLEM_OBJECT_DROP" || id == "REL_HUMAN_ADAPT_ENVIRONMENT";
 
         /// <summary>nullable引数をSetフラグへ変換し、変更なしとenumの先頭値を区別する。</summary>
         private static RelationshipStateChange Change(HumanToCatState? human, CatWarinessState? cat, SettlementState? settlement)
