@@ -14,33 +14,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp:NNN:CaseGenerationProfile
   UseFixedTanakaCase: 1
   HumanArchetypes:
-  - {fileID: 11400000, guid: 20bdfd4b7a248e942ae8bc2ef64b1d29, type: 2}
+  - {fileID: 11400000, guid: 3c147a9f06c428f41993f5549a454651, type: 2}
   Lifestyles:
-  - {fileID: 11400000, guid: 6cb83b6bb542ab84d9d654c801ebd3ab, type: 2}
+  - {fileID: 11400000, guid: 393630f4709df7f468570f1207ae07bf, type: 2}
   Residences:
-  - {fileID: 11400000, guid: c4bcf9d56c5a97e4d9f363b18a8589dd, type: 2}
+  - {fileID: 11400000, guid: 55ddc9c1ecff2e5479f78f42555ec877, type: 2}
   Problems:
-  - {fileID: 11400000, guid: 684ea106017bc9f438ff7dba536aff8c, type: 2}
-  - {fileID: 11400000, guid: 2a3f6c79e1b3bd2459e771aaf31e8161, type: 2}
+  - {fileID: 11400000, guid: 55d3a2e98ff463c4da16adfd8a48abe2, type: 2}
+  - {fileID: 11400000, guid: 7b28465b0f4e75048b5f9a8237ac76f8, type: 2}
   Cats:
-  - {fileID: 11400000, guid: ea98bca6df15d9143be49dd3e822a05a, type: 2}
-  - {fileID: 11400000, guid: 3b1378631443b174a97626a01c687310, type: 2}
-  - {fileID: 11400000, guid: 19299ed2b9e1b9a4a818a63ec6be8d1f, type: 2}
-  - {fileID: 11400000, guid: a1cb6397554d0e74bbc91916863677bc, type: 2}
-  - {fileID: 11400000, guid: 7ba2a3fe539959947962f2d03cf07844, type: 2}
-  - {fileID: 11400000, guid: ace8aa1290c7a7744a0379716211fcca, type: 2}
-  - {fileID: 11400000, guid: c335569f0b65db84dbff46e4f6cbbe24, type: 2}
-  - {fileID: 11400000, guid: a805e556f95f5484393efadedbeb6238, type: 2}
-  - {fileID: 11400000, guid: 247123d4570793243895ce2e23214d4b, type: 2}
-  - {fileID: 11400000, guid: ca72bf5c0e7487d43a638861d5847a53, type: 2}
+  - {fileID: 11400000, guid: ed7a221a5483c4444a198e1ae0531c65, type: 2}
+  - {fileID: 11400000, guid: 72fb999b7fdd1d747a47f7d94ad65810, type: 2}
+  - {fileID: 11400000, guid: 9d7f3cd70cbaeac4c872d12046f0d1fa, type: 2}
+  - {fileID: 11400000, guid: 2cbe048a3540b2e47995ef3e5bb844fe, type: 2}
+  - {fileID: 11400000, guid: dc52503dfa26c864aac3b876fcf1588d, type: 2}
+  - {fileID: 11400000, guid: a350cd83adfa91b4092b2535d0139578, type: 2}
+  - {fileID: 11400000, guid: b810757e56e06754ca00556eb12bd1c3, type: 2}
+  - {fileID: 11400000, guid: d974582e87a977e4fb6312b26fd125d6, type: 2}
+  - {fileID: 11400000, guid: fd845202529969e40b5175f1b96768a9, type: 2}
+  - {fileID: 11400000, guid: f5bc69fb40c4ea54da50f4c2001118ea, type: 2}
   HumanBenchmarks:
-  - {fileID: 11400000, guid: 83a809105f765d445ab9626f1cec912d, type: 2}
-  - {fileID: 11400000, guid: f032d920f8c1cc04197f804e34572865, type: 2}
-  - {fileID: 11400000, guid: 375ad3112ee9c9241b81add0a00916fe, type: 2}
-  - {fileID: 11400000, guid: 8d436d2be5175d9428a251fe13a9a388, type: 2}
-  - {fileID: 11400000, guid: b3fd0276ca31c2f46baef8dc9d5340df, type: 2}
-  - {fileID: 11400000, guid: 46aa6872f4645a64b8facf8138b32503, type: 2}
-  - {fileID: 11400000, guid: 9e2487f5f7d6ce449840c36efe81e37b, type: 2}
-  - {fileID: 11400000, guid: 128bd31e04939874c9a6be2ff0510faf, type: 2}
-  - {fileID: 11400000, guid: 46deeaa6e3e0abd4a8a18f4f6dab9142, type: 2}
-  - {fileID: 11400000, guid: 291a223033ae9704694e7eb6008149d4, type: 2}
+  - {fileID: 11400000, guid: 9f10e6bf5eeac5e4dba4ecdfbbc40129, type: 2}
+  - {fileID: 11400000, guid: 010b1855bb552564eb795b0de269adcf, type: 2}
+  - {fileID: 11400000, guid: fd18355fc9d974749b30cef593349403, type: 2}
+  - {fileID: 11400000, guid: 4661593c51b5cea4da3ab073fe296e27, type: 2}
+  - {fileID: 11400000, guid: f2de63e85c4ed164d8692106a22a437f, type: 2}
+  - {fileID: 11400000, guid: 287b71aa6a5a31144b7c3cc08247446e, type: 2}
+  - {fileID: 11400000, guid: dcb3669676385204393db7724bfc97cf, type: 2}
+  - {fileID: 11400000, guid: a11a132cbc9b2c745828cf1c316da592, type: 2}
+  - {fileID: 11400000, guid: d85732fb90d409242a89e60695540acd, type: 2}
+  - {fileID: 11400000, guid: 54c8f6d34368e824091682703f5a7bad, type: 2}

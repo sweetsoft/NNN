@@ -24,23 +24,49 @@ namespace NNN.Editor
         [MenuItem("NNN/Test Data/Generate If Missing")]
         public static void EnsureGenerated()
         {
-            var existing = AssetDatabase.LoadAssetAtPath<CaseGenerationProfile>(ProfilePath);
-            if (existing == null) { Generate(); return; }
-            if (existing.HumanBenchmarks != null && existing.HumanBenchmarks.Count == 10) return;
-            Rebuild();
+            // ドメインリロード直後は、ファイルが存在していても型情報の復元前で
+            // LoadAssetAtPath<T>が一時的にnullを返すことがある。パスの存在を先に確認し、
+            // その瞬間を「未生成」と誤判定して連番アセットを作らないようにする。
+            if (AssetDatabase.AssetPathExists(ProfilePath))
+            {
+                var existing = AssetDatabase.LoadAssetAtPath<CaseGenerationProfile>(ProfilePath);
+                if (existing == null)
+                {
+                    Debug.LogWarning("NNN test profile exists but is not loadable yet. Automatic generation was skipped: " + ProfilePath);
+                    return;
+                }
+
+                if (existing.HumanBenchmarks == null || existing.HumanBenchmarks.Count != 10)
+                    Debug.LogWarning("NNN test profile is incomplete. Use 'NNN/Test Data/Rebuild All' explicitly after reviewing references.");
+                return;
+            }
+
+            Generate();
         }
 
         /// <summary>生成済みデータを削除し、コード上の初期値から作り直す。</summary>
         [MenuItem("NNN/Test Data/Rebuild All")]
         public static void Rebuild()
         {
-            if (AssetDatabase.IsValidFolder(Root)) AssetDatabase.DeleteAsset(Root);
+            if (AssetDatabase.IsValidFolder(Root) && !AssetDatabase.DeleteAsset(Root))
+            {
+                Debug.LogError("NNN test data rebuild aborted because the existing folder could not be deleted: " + Root);
+                return;
+            }
             Generate();
         }
 
         /// <summary>フォルダ、参照先、最後にプロファイルの順で永続化する。</summary>
         private static void Generate()
         {
+            // 既存Profileがある状態での追記生成は禁止する。
+            // 以前はGenerateUniqueAssetPathにより失敗が見えず、" 9"や" 10"が増殖していた。
+            if (AssetDatabase.AssetPathExists(ProfilePath))
+            {
+                Debug.LogError("NNN test data generation aborted because the profile already exists: " + ProfilePath);
+                return;
+            }
+
             EnsureFolder("Assets", "Resources");
             EnsureFolder("Assets/Resources", "NNNTestData");
             EnsureFolder(Root, "Traits");
@@ -90,7 +116,12 @@ namespace NNN.Editor
         private static void SaveOnce(Object item, string path, HashSet<Object> saved)
         {
             if (item == null || !saved.Add(item)) return;
-            AssetDatabase.CreateAsset(item, AssetDatabase.GenerateUniqueAssetPath(path));
+            if (AssetDatabase.AssetPathExists(path))
+            {
+                Debug.LogError("NNN test data generation found an unexpected existing asset and was stopped for this item: " + path);
+                return;
+            }
+            AssetDatabase.CreateAsset(item, path);
         }
     }
 }
