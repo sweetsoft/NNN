@@ -145,8 +145,28 @@ namespace NNN
             // Normalは関係状態を進めない前提。Majorだけが履歴・記憶・関係状態を更新する。
             foreach (var action in selectedNormal) Apply(action, result);
             if (selectedMajor != null) Apply(selectedMajor, result);
+
+            // イベントの選択・状態更新は従来のNormal→Major順を維持し、すべての適用が終わってから
+            // 表示用ログだけをゲーム内時刻順へ並べる。これにより乱数消費や関係状態の因果へ影響を与えない。
+            SortLogEntriesChronologically(result.LogEntries);
             result.StateAfter = State.Relationship.Clone();
             return result;
+        }
+
+        /// <summary>
+        /// 完成した一日分のログをTime昇順へ並べる。同時刻では追記時のIndexを第2キーにするため、
+        /// 一つのイベント内で定義された観測・反応の因果順や、従来のイベント適用順が維持される。
+        /// </summary>
+        public static void SortLogEntriesChronologically(List<ObservationLogEntry> entries)
+        {
+            if (entries == null || entries.Count < 2) return;
+            var ordered = entries.Select((entry, index) => new { Entry = entry, OriginalIndex = index })
+                .OrderBy(item => item.Entry.Time)
+                .ThenBy(item => item.OriginalIndex)
+                .Select(item => item.Entry)
+                .ToList();
+            entries.Clear();
+            entries.AddRange(ordered);
         }
 
         /// <summary>新規SimulatorをDAY1からDAY30まで進め、UI・検証で利用できる全日結果を返す。</summary>

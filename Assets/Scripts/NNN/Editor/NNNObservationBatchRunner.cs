@@ -16,7 +16,7 @@ namespace NNN.Editor
     /// </summary>
     public static class NNNObservationBatchRunner
     {
-        private static readonly int[] VerificationSeeds = { 7, 42, 20260904, 8675309 };
+        private static readonly int[] VerificationSeeds = { 7, 42, 12345, 20260904, 8675309 };
         private const int DefaultStressSeedCount = 1000;
 
         // 企画書で発生日集計を要求されているイベント。配列順をレポート順としても利用する。
@@ -56,6 +56,7 @@ namespace NNN.Editor
         [MenuItem("NNN/Observation/Verify Multiple Seeds")]
         public static void VerifyMultipleSeeds()
         {
+            ValidateStableEqualTimeOrdering();
             foreach (int seed in VerificationSeeds)
             {
                 var first = Run(seed);
@@ -114,6 +115,7 @@ namespace NNN.Editor
         private static StressTestReport ExecuteStressTest(int seedCount)
         {
             if (seedCount < 1) throw new ArgumentOutOfRangeException(nameof(seedCount));
+            ValidateStableEqualTimeOrdering();
             var aggregate = new StressAggregate(seedCount);
             var timer = Stopwatch.StartNew();
 
@@ -132,9 +134,12 @@ namespace NNN.Editor
 
             // 全件二重実行は避け、範囲全体へ均等に散らした20 Seedで乱数列と最終状態を照合する。
             int reproducibilityCount = Math.Min(20, seedCount);
-            for (int index = 0; index < reproducibilityCount; index++)
+            var reproducibilitySeeds = VerificationSeeds
+                .Concat(Enumerable.Range(0, reproducibilityCount).Select(index =>
+                    reproducibilityCount == 1 ? 0 : index * (seedCount - 1) / (reproducibilityCount - 1)))
+                .Distinct().Take(reproducibilityCount).ToArray();
+            foreach (int seed in reproducibilitySeeds)
             {
-                int seed = reproducibilityCount == 1 ? 0 : index * (seedCount - 1) / (reproducibilityCount - 1);
                 var first = Run(seed);
                 var second = Run(seed);
                 if (Signature(first.Results) != Signature(second.Results) || StateSignature(first.State) != StateSignature(second.State))
@@ -186,9 +191,51 @@ namespace NNN.Editor
             if (maxNoMajorStreak >= 10) failures.Add("Major Eventなしが" + maxNoMajorStreak + "日連続");
             if (days.TryGetValue("REL_PLAY_TOGETHER", out int playDay) && playDay <= 10) failures.Add("後半イベントをDAY10以前に消化");
 
+            int logOrderingViolations = ValidateLogOrdering(seed, results, failures);
             ValidateNormalActions(results, warnings, failures);
-            aggregate.Record(seed, results, state, days, majors.Count, maxMajorStreak, maxNoMajorStreak, failures, warnings);
+            aggregate.Record(seed, results, state, days, majors.Count, maxMajorStreak, maxNoMajorStreak,
+                logOrderingViolations, failures, warnings);
         }
+
+        /// <summary>
+        /// 全隣接ログを比較し、降順になった箇所をFAILへ追加する。
+        /// エラーにはSeed、DAY、前後ログを含め、単一Seedだけで再現調査できる形にする。
+        /// </summary>
+        private static int ValidateLogOrdering(int seed, IEnumerable<DaySimulationResult> results, IList<string> failures)
+        {
+            int violations = 0;
+            foreach (DaySimulationResult day in results)
+            {
+                for (int index = 1; index < day.LogEntries.Count; index++)
+                {
+                    ObservationLogEntry previous = day.LogEntries[index - 1];
+                    ObservationLogEntry current = day.LogEntries[index];
+                    if (previous.Time <= current.Time) continue;
+                    violations++;
+                    failures.Add("ログ時刻逆転 Seed=" + seed + " DAY=" + day.Day +
+                                 " Previous=[" + FormatLog(previous) + "] Current=[" + FormatLog(current) + "]");
+                }
+            }
+            return violations;
+        }
+
+        /// <summary>
+        /// 同一Timeの二件を人工的に並べ、ソート後も元の因果順が変わらないことを直接検査する。
+        /// 実データに偶然同時刻がない場合でも、ソート契約自体の退行を検出できる。
+        /// </summary>
+        private static void ValidateStableEqualTimeOrdering()
+        {
+            var first = new ObservationLogEntry { Time = 19.42f, ActionId = "FIRST" };
+            var second = new ObservationLogEntry { Time = 19.42f, ActionId = "SECOND" };
+            var earlier = new ObservationLogEntry { Time = 18.30f, ActionId = "EARLIER" };
+            var logs = new List<ObservationLogEntry> { first, second, earlier };
+            ObservationSimulator.SortLogEntriesChronologically(logs);
+            if (!ReferenceEquals(logs[0], earlier) || !ReferenceEquals(logs[1], first) || !ReferenceEquals(logs[2], second))
+                throw new InvalidOperationException("Equal-time observation log ordering is not stable.");
+        }
+
+        private static string FormatLog(ObservationLogEntry log)
+            => log.Time.ToString("0.00", CultureInfo.InvariantCulture) + " " + log.ActionId + " " + log.Text;
 
         private static void ValidateRegressionAndRecovery(IList<DaySimulationResult> results, IDictionary<string, int> days, IList<string> failures)
         {
@@ -266,6 +313,9 @@ namespace NNN.Editor
             if (signature != Signature(repeated)) throw new InvalidOperationException("Seed " + seed + ": reproducibility failed.");
             if (results.Count != 30) throw new InvalidOperationException("Seed " + seed + ": not 30 days.");
             if (results.Any(x => x.NormalActionIds.Count < 1 || x.NormalActionIds.Count > 3)) throw new InvalidOperationException("Seed " + seed + ": invalid normal action count.");
+            var logFailures = new List<string>();
+            if (ValidateLogOrdering(seed, results, logFailures) > 0)
+                throw new InvalidOperationException(logFailures[0]);
             if (!results.Any(x => string.IsNullOrEmpty(x.MajorEventId))) throw new InvalidOperationException("Seed " + seed + ": no normal-only day.");
             var majors = results.Where(x => !string.IsNullOrEmpty(x.MajorEventId)).ToList();
             if (majors.GroupBy(x => x.MajorEventId).Any(g => g.Count() > 1)) throw new InvalidOperationException("Seed " + seed + ": one-shot event repeated.");
@@ -320,17 +370,19 @@ namespace NNN.Editor
             private int maximumMajorStreak;
             private int maximumNoMajorStreak;
             private int totalMajorEvents;
+            private int logOrderingViolations;
 
             public StressAggregate(int seedCount) { this.seedCount = seedCount; }
 
             public void Record(int seed, IList<DaySimulationResult> results, ObservationSimulationState state,
                 IDictionary<string, int> days, int majorCount, int majorStreak, int noMajorStreak,
-                IList<string> seedFailures, IList<string> seedWarnings)
+                int seedLogOrderingViolations, IList<string> seedFailures, IList<string> seedWarnings)
             {
                 completedSeedCount++;
                 totalMajorEvents += majorCount;
                 maximumMajorStreak = Math.Max(maximumMajorStreak, majorStreak);
                 maximumNoMajorStreak = Math.Max(maximumNoMajorStreak, noMajorStreak);
+                logOrderingViolations += seedLogOrderingViolations;
                 foreach (string id in DistributionEventIds)
                     if (days.TryGetValue(id, out int day)) eventDays[id].Add(day);
 
@@ -371,6 +423,7 @@ namespace NNN.Editor
                 text.AppendLine("Elapsed: " + elapsed.TotalMilliseconds.ToString("0.0", CultureInfo.InvariantCulture) + " ms");
                 text.AppendLine("Average per 30-day simulation: " + (elapsed.TotalMilliseconds / seedCount).ToString("0.000", CultureInfo.InvariantCulture) + " ms");
                 text.AppendLine("Reproducibility checks: " + Math.Min(20, seedCount) + " representative seeds (mismatches are counted as FAIL)");
+                text.AppendLine("Log ordering violations: " + logOrderingViolations);
                 text.AppendLine("Average Major Events: " + (completedSeedCount == 0 ? "0" : ((double)totalMajorEvents / completedSeedCount).ToString("0.00", CultureInfo.InvariantCulture)));
                 text.AppendLine("Maximum consecutive Major days: " + maximumMajorStreak);
                 text.AppendLine("Maximum no-Major gap: " + maximumNoMajorStreak);
