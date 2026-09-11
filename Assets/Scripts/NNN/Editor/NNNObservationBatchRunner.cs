@@ -176,74 +176,8 @@ namespace NNN.Editor
                 Debug.Log("NNN Incremental Legacy Equivalence Seed " + seed + ": PASS");
             }
 
-            ValidateIntervention("CAT_INVESTIGATION_TEST");
-            ValidateIntervention("HUMAN_OPERATION_SIGNAL_HINT_TEST");
-        }
+            NNNActionVerification.Verify();
 
-        private static void ValidateIntervention(string actionId)
-        {
-            const int seed = 7;
-            var simulator = new ObservationSimulator(SatoSuzuVisitObservationFactory.CreateRoute(), seed);
-            var results = new List<DaySimulationResult>();
-            bool applied = false;
-            string pastSignature = null;
-            string relationshipBefore = null;
-            string historyBefore = null;
-            string memoryBefore = null;
-            int actionDay = -1;
-            float actionTime = -1f;
-            bool pendingFutureWasInvalidated = false;
-
-            for (int day = 1; day <= 30; day++)
-            {
-                simulator.BeginDay(day);
-                while (simulator.GenerateNextEvent() != null)
-                {
-                    ObservationEventDefinition executed = simulator.ExecuteNextEvent();
-                    if (!applied && executed.Id == "PROBLEM_OVERTOUCH_CAT_PUNCH")
-                    {
-                        actionDay = day;
-                        pastSignature = Signature(results) + "|TODAY:" + string.Join(",", simulator.DayContext.ExecutedEventIds.OrderBy(x => x).ToArray());
-                        relationshipBefore = simulator.State.Relationship.ToString();
-                        historyBefore = string.Join(",", simulator.State.HistoryFlags.OrderBy(x => x).ToArray());
-                        memoryBefore = string.Join(",", simulator.State.MemoryFlags.OrderBy(x => x).ToArray());
-                        int pendingBeforeAction = simulator.PendingEventCount;
-                        actionTime = Math.Max(20f, simulator.DayContext.CurrentTime);
-                        simulator.ApplyNNNAction(actionId, actionTime);
-                        pendingFutureWasInvalidated = pendingBeforeAction == 0 || simulator.PendingEventCount == 0;
-                        applied = true;
-
-                        if (relationshipBefore != simulator.State.Relationship.ToString() ||
-                            historyBefore != string.Join(",", simulator.State.HistoryFlags.OrderBy(x => x).ToArray()) ||
-                            memoryBefore != string.Join(",", simulator.State.MemoryFlags.OrderBy(x => x).ToArray()))
-                            throw new InvalidOperationException(actionId + ": action changed relationship/history/memory immediately.");
-                    }
-                }
-                results.Add(simulator.EndDay());
-            }
-
-            if (!applied || results.Count != 30) throw new InvalidOperationException(actionId + ": intervention route did not complete.");
-            if (!pendingFutureWasInvalidated) throw new InvalidOperationException(actionId + ": pending future events were not invalidated.");
-            if (pastSignature == null || !results[actionDay - 1].MajorEventId.Equals("PROBLEM_OVERTOUCH_CAT_PUNCH"))
-                throw new InvalidOperationException(actionId + ": confirmed past event was replaced.");
-            if (DayOf(results, "REL_RESPECT_SIGNAL") <= actionDay)
-                throw new InvalidOperationException(actionId + ": RespectSignal occurred on the punch day.");
-            if (DayOf(results, "REL_GREETING") < 0) throw new InvalidOperationException(actionId + ": route did not reach Greeting.");
-
-            if (actionId == "CAT_INVESTIGATION_TEST" && !simulator.State.PlayerKnowledgeFlags.Contains("KNOW_SUZU_RETURNS_HOME"))
-                throw new InvalidOperationException("CAT investigation did not add player knowledge.");
-            if (actionId == "HUMAN_OPERATION_SIGNAL_HINT_TEST" && !simulator.State.Modifiers.Any(x =>
-                    x.Id == "HUMAN_SIGNAL_HINT" && x.ActiveFromDay == actionDay + 1 && x.PriorityBonus > 0))
-                throw new InvalidOperationException("Human operation did not add an active future modifier.");
-            if (simulator.State.PlayerActionHistory.Count != 1) throw new InvalidOperationException(actionId + ": action history was not recorded once.");
-
-            var natural = Run(seed);
-            int naturalRespectDay = DayOf(natural.Results, "REL_RESPECT_SIGNAL");
-            int actionRespectDay = DayOf(results, "REL_RESPECT_SIGNAL");
-            Debug.Log("NNN Incremental Action " + actionId + ": PASS | DAY" + actionDay + " " +
-                      actionTime.ToString("0.00", CultureInfo.InvariantCulture) + " | Respect natural/action=" +
-                      naturalRespectDay + "/" + actionRespectDay + " | FutureChanged=" +
-                      (Signature(natural.Results) != Signature(results)));
         }
 
         /// <summary>一つのSeedを検査し、FAIL/WARNINGを例外化せず集計器へ蓄積する。</summary>

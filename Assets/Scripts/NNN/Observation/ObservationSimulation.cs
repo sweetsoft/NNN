@@ -283,34 +283,52 @@ namespace NNN
             return definition;
         }
 
-        /// <summary>テスト用NNN ACTIONを現在時刻へ記録し、未実行イベントだけを破棄して次回生成時に再評価する。</summary>
+        /// <summary>ロック理由を含む選択肢。参照だけでは乱数・履歴を変更しない。</summary>
+        public List<NNNActionOption> GetNNNActionOptions()
+            => NNNActionCatalog.All.Select(x => new NNNActionOption(x, ActionUnavailableReason(x))).ToList();
+
+        private string ActionUnavailableReason(NNNActionDefinition action)
+        {
+            if (DayContext == null) return "一日を開始してください。";
+            if (DayContext.PlayerActionRecords.Count > 0) return "本日のNNN ACTIONは使用済みです。";
+            if (action.Kind == NNNActionKind.Investigation)
+                return State.PlayerKnowledgeFlags.Contains(action.Knowledge) ? "調査済みです。" : null;
+            if (action.Kind != NNNActionKind.Operation) return null;
+            if (!State.PlayerKnowledgeFlags.Contains(action.Knowledge)) return "対応する調査で情報を得ると解禁されます。";
+            var target = route.Events.FirstOrDefault(x => x.Id == action.TargetEventId);
+            if (target == null) return "この案件には対応する出来事がありません。";
+            if (State.OccurredEventIds.Contains(target.Id)) return "対応する出来事は発生済みです。";
+            if (target.LatestDay < DayContext.Day + 1) return "効果を活かせる期間が終了しています。";
+            if (target.EarliestDay > DayContext.Day + action.DurationDays) return "まだ工作の効果を活かせる時期ではありません。";
+            if (State.Modifiers.Any(x => x.Id == action.Id && x.ExpireDay >= DayContext.Day)) return "同じ工作の効果が継続中です。";
+            return null;
+        }
+
+        /// <summary>調査・工作・SKIPのいずれかを一日一回実行する。検証失敗時は状態を変更しない。</summary>
         public void ApplyNNNAction(string actionId, float time)
         {
             EnsureDayActive();
-            if (time < DayContext.CurrentTime || time > 24f) throw new ArgumentOutOfRangeException(nameof(time));
-            var record = new ObservationPlayerActionRecord { Day = DayContext.Day, Time = time, ActionId = actionId };
+            if (float.IsNaN(time) || float.IsInfinity(time) || time < DayContext.CurrentTime || time > 24f)
+                throw new ArgumentOutOfRangeException(nameof(time));
+            var action = NNNActionCatalog.Find(actionId);
+            if (action == null) throw new ArgumentException("Unknown NNN ACTION: " + actionId, nameof(actionId));
+            string reason = ActionUnavailableReason(action);
+            if (reason != null) throw new InvalidOperationException(reason);
+            var record = new ObservationPlayerActionRecord { Day = DayContext.Day, Time = time, ActionId = action.Id };
             DayContext.CurrentTime = time;
             DayContext.PlayerActionRecords.Add(record);
             State.PlayerActionHistory.Add(record);
-            if (actionId == "CAT_INVESTIGATION_TEST")
-            {
-                State.PlayerKnowledgeFlags.Add("KNOW_SUZU_RETURNS_HOME");
-            }
-            else if (actionId == "HUMAN_OPERATION_SIGNAL_HINT_TEST")
-            {
+            if (action.Kind == NNNActionKind.Investigation)
+                State.PlayerKnowledgeFlags.Add(action.Knowledge);
+            else if (action.Kind == NNNActionKind.Operation)
                 State.Modifiers.Add(new ObservationSimulationModifier
                 {
-                    Id = "HUMAN_SIGNAL_HINT", AppliedDay = DayContext.Day, AppliedTime = time,
-                    ActiveFromDay = DayContext.Day + 1, ExpireDay = DayContext.Day + 3,
-                    TargetEventId = "REL_RESPECT_SIGNAL", PriorityBonus = 80
+                    Id = action.Id, AppliedDay = DayContext.Day, AppliedTime = time,
+                    ActiveFromDay = DayContext.Day + 1, ExpireDay = DayContext.Day + action.DurationDays,
+                    TargetEventId = action.TargetEventId, PriorityBonus = action.PriorityBonus
                 });
-            }
-            else throw new ArgumentException("Unknown NNN ACTION: " + actionId, nameof(actionId));
-
-            pendingEvents.Clear();
-            generatedSinceLastAction = false;
+            // 調査とSKIPは世界に作用しない。工作も翌日から有効なので当日の抽選をやり直さない。
         }
-
         /// <summary>当日結果を確定し、表示ログと旧NormalActionIds順、翌日用Recent状態を整える。</summary>
         public DaySimulationResult EndDay()
         {
