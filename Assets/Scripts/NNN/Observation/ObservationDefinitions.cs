@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace NNN
@@ -51,7 +52,7 @@ namespace NNN
         DaysSinceLastMajorAtLeast, CatTrait, HumanTrait,
         CohabitationAtLeast, CohabitationAtMost, AcceptanceAtLeast, AcceptanceAtMost,
         AdaptationAtLeast, AdaptationAtMost, HasHomePreparation, MissingHomePreparation,
-        HasWorldFlag, MissingWorldFlag, HasKnowledgeTag
+        HasWorldFlag, MissingWorldFlag, HasKnowledgeTag, DayAtLeast
     }
 
     [Serializable]
@@ -128,6 +129,7 @@ namespace NNN
     /// </summary>
     public sealed class ObservationEventCondition
     {
+        public string Description;
         public ObservationConditionType Type;
         public int IntValue;
         public string StringValue;
@@ -145,6 +147,8 @@ namespace NNN
     /// <summary>イベント定義に保存する観測ログの雛形。Textには推測を入れず画面で観測できる事実を書く。</summary>
     public sealed class ObservationLogTemplate
     {
+        /// <summary>同じイベント内の表示場面。空ならイベント全体を一場面にする。</summary>
+        public string SceneId;
         [Range(0f, 24f)] public float Time;
         public ObservationActor Actor;
         public string ActionId;
@@ -169,6 +173,7 @@ namespace NNN
         public List<ObservationEventCondition> Conditions = new List<ObservationEventCondition>();
         public List<RelationshipHistoryFlag> AddHistoryFlags = new List<RelationshipHistoryFlag>();
         public List<RelationshipMemory> AddMemories = new List<RelationshipMemory>();
+        public List<string> AddKnowledgeTags = new List<string>();
         public RelationshipStateChange StateChange = new RelationshipStateChange();
         public List<ObservationLogTemplate> Logs = new List<ObservationLogTemplate>();
         [TextArea] public string DebugDescription;
@@ -190,6 +195,8 @@ namespace NNN
     /// <summary>UIへ渡す実行済みログ。テンプレートから複製されるため表示側はイベント定義を参照しなくてよい。</summary>
     public sealed class ObservationLogEntry
     {
+        public string EventId;
+        public string SceneId;
         public float Time;
         public ObservationActor Actor;
         public string ActionId;
@@ -226,16 +233,39 @@ namespace NNN
     /// </summary>
     public sealed class DaySimulationResult
     {
+        public List<string> AddedKnowledgeTags = new List<string>();
         public CatReportResult CatReport;
         public InvestigationResult Investigation;
         public int Day;
         public List<string> NormalActionIds = new List<string>();
         public string MajorEventId;
+        public ObservationEventRole MajorEventRole;
+        public ObservationEventCategory MajorEventCategory;
         public List<ObservationLogEntry> LogEntries = new List<ObservationLogEntry>();
         public RelationshipState StateBefore;
         public RelationshipState StateAfter;
         public List<string> NormalCandidates = new List<string>();
         public List<string> RelationshipCandidates = new List<string>();
         public List<string> ProblemCandidates = new List<string>();
+
+        /// <summary>重要な出来事を優先し、表示場面数をイベント数から分離する。生ログは保持する。</summary>
+        public List<ObservationScene> GetPresentationScenes(int maximum = 4)
+        {
+            if (maximum < 1) throw new ArgumentOutOfRangeException(nameof(maximum));
+            return LogEntries.GroupBy(x => new { x.EventId, Scene = x.SceneId ?? "" })
+                .Select(group => new ObservationScene { EventId = group.Key.EventId, SceneId = group.Key.Scene,
+                    Logs = group.OrderBy(x => x.Time).ToList() })
+                .OrderByDescending(scene => scene.EventId == MajorEventId)
+                .ThenBy(scene => scene.Logs[0].Time).Take(maximum)
+                .OrderBy(scene => scene.Logs[0].Time).ToList();
+        }
+    }
+
+    /// <summary>アニメーションの素材とは独立した、UIへ渡す一場面の観察ログ。</summary>
+    public sealed class ObservationScene
+    {
+        public string EventId;
+        public string SceneId;
+        public List<ObservationLogEntry> Logs;
     }
 }

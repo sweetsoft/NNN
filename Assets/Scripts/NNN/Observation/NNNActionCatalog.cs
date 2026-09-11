@@ -97,11 +97,14 @@ namespace NNN
         public ReadOnlyCollection<string> RequiredKnowledgeTags { get; }
         public ReadOnlyCollection<string> DiscoveryKnowledgeTags { get; }
         public ReadOnlyCollection<string> AddedKnowledgeTags { get; }
+        public ReadOnlyCollection<ObservationEventCondition> Conditions { get; }
+        public ReadOnlyCollection<ObservationEventCondition> DiscoveryConditions { get; }
         public string ResultText { get; }
         public OperationEffect Effect { get; }
         public NNNActionDefinition(string id, string name, string description, NNNActionKind kind,
             IEnumerable<string> requiredKnowledgeTags = null, IEnumerable<string> discoveryKnowledgeTags = null,
-            IEnumerable<string> addedKnowledgeTags = null, string resultText = null, OperationEffect effect = null)
+            IEnumerable<string> addedKnowledgeTags = null, string resultText = null, OperationEffect effect = null,
+            IEnumerable<ObservationEventCondition> conditions = null, IEnumerable<ObservationEventCondition> discoveryConditions = null)
         {
             if (kind == NNNActionKind.Operation && effect == null) throw new ArgumentNullException(nameof(effect));
             Id = id; DisplayName = name; Description = description; Kind = kind;
@@ -109,6 +112,8 @@ namespace NNN
             DiscoveryKnowledgeTags = OperationEffect.Copy(discoveryKnowledgeTags);
             AddedKnowledgeTags = OperationEffect.Copy(addedKnowledgeTags);
             ResultText = resultText; Effect = effect;
+            Conditions = (conditions ?? Enumerable.Empty<ObservationEventCondition>()).ToList().AsReadOnly();
+            DiscoveryConditions = (discoveryConditions ?? Enumerable.Empty<ObservationEventCondition>()).ToList().AsReadOnly();
         }
     }
 

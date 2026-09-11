@@ -24,6 +24,7 @@ namespace NNN
         public HashSet<string> WorldFlags { get; } = new HashSet<string>();
         public List<PendingOperationEffect> PendingOperations { get; } = new List<PendingOperationEffect>();
         public List<ObservationPlayerActionRecord> PlayerActionHistory { get; } = new List<ObservationPlayerActionRecord>();
+        public Dictionary<string, int> ActionLastOfferedDay { get; } = new Dictionary<string, int>();
     }
 
     /// <summary>イベント期間、単発性、関係状態、履歴、記憶、人物・猫TraitをAND条件で評価する。</summary>
@@ -44,6 +45,7 @@ namespace NNN
         {
             switch (c.Type)
             {
+                case ObservationConditionType.DayAtLeast: return s.CurrentDay >= c.IntValue;
                 case ObservationConditionType.HasWorldFlag: return s.WorldFlags.Contains(c.StringValue);
                 case ObservationConditionType.MissingWorldFlag: return !s.WorldFlags.Contains(c.StringValue);
                 case ObservationConditionType.HasKnowledgeTag: return s.PlayerKnowledgeFlags.Contains(c.StringValue);
@@ -186,10 +188,14 @@ namespace NNN
         private readonly Dictionary<string, int> normalSelectionOrder = new Dictionary<string, int>();
         private DaySimulationResult currentResult;
         private bool eventsGenerated;
+        private List<string> dailyActionIds;
         private int nextSelectionOrder;
         public ObservationSimulationState State { get; } = new ObservationSimulationState();
         public ObservationDayContext DayContext { get; private set; }
         public int PendingEventCount => pendingEvents.Count;
+        public List<ObservationScene> GetObservationScenes(int maximum = 4)
+        { EnsureDayActive(); return currentResult.GetPresentationScenes(maximum); }
+        public IReadOnlyList<string> ObservedKnowledgeTags => currentResult?.AddedKnowledgeTags.AsReadOnly();
         /// <summary>同じRouteとSeedなら同じ乱数列を使い、30日結果を再現する。</summary>
         public ObservationSimulator(ObservationRouteDefinition route, int seed) { this.route = route ?? throw new ArgumentNullException(nameof(route)); director = new ObservationDirector(seed); }
 
@@ -218,6 +224,7 @@ namespace NNN
             pendingEvents.Clear();
             normalSelectionOrder.Clear();
             eventsGenerated = false;
+            dailyActionIds = null;
             nextSelectionOrder = 0;
         }
 
@@ -274,6 +281,8 @@ namespace NNN
             {
                 DayContext.HasMajorEventOccurred = true;
                 currentResult.MajorEventId = definition.Id;
+                currentResult.MajorEventRole = definition.Role;
+                currentResult.MajorEventCategory = definition.Category;
                 // 同日Major上限を保証するため、まだ実行していないMajor候補は破棄する。
                 pendingEvents.RemoveAll(x => x.Definition.Category != ObservationEventCategory.Normal);
             }
@@ -287,20 +296,27 @@ namespace NNN
                 !IsDiscovered(x) ? NNNActionVisibility.Hidden : ActionUnavailableReason(x) == null
                     ? NNNActionVisibility.Available : NNNActionVisibility.VisibleLocked, ActionUnavailableReason(x))).ToList();
             if (includeHidden) return options;
+            if (dailyActionIds != null) return dailyActionIds.Select(id => options.Single(x => x.Definition.Id == id)).ToList();
             var visible = options.Where(x => x.Visibility != NNNActionVisibility.Hidden
                 && x.Definition.Kind != NNNActionKind.Skip
                 && !(x.Definition.Kind == NNNActionKind.Investigation && x.Definition.AddedKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains))
                 && !OperationSatisfied(x.Definition))
-                .OrderByDescending(x => x.IsAvailable).ThenByDescending(x => x.Definition.Kind == NNNActionKind.Operation)
+                .OrderByDescending(x => x.IsAvailable)
+                // 種類別の固定枠を設けず、提示されていない候補から順に再提示する。
+                .ThenBy(x => State.ActionLastOfferedDay.TryGetValue(x.Definition.Id, out int day) ? day : 0)
+                .ThenByDescending(x => x.Definition.Kind == NNNActionKind.Operation)
                 .Take(3).ToList();
             visible.AddRange(options.Where(x => x.Definition.Kind == NNNActionKind.Skip));
             return visible;
         }
 
         private bool IsDiscovered(NNNActionDefinition action)
-            => action.DiscoveryKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains);
+            => action.DiscoveryKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains)
+                && action.DiscoveryConditions.All(c => ObservationConditionEvaluator.Evaluate(c, route, State));
         private bool MeetsKnowledge(NNNActionDefinition action)
             => action.RequiredKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains);
+        private bool MeetsRequirements(NNNActionDefinition action)
+            => MeetsKnowledge(action) && action.Conditions.All(c => ObservationConditionEvaluator.Evaluate(c, route, State));
         private bool OperationSatisfied(NNNActionDefinition action)
             => action.Kind == NNNActionKind.Operation
                 && action.Effect.AddWorldFlags.All(State.WorldFlags.Contains)
@@ -316,6 +332,9 @@ namespace NNN
             if (!IsDiscovered(action)) return "未発見です。";
             var missing = action.RequiredKnowledgeTags.Where(x => !State.PlayerKnowledgeFlags.Contains(x)).ToArray();
             if (missing.Length > 0) return "必要情報: " + string.Join(", ", missing);
+            var unmet = action.Conditions.Where(c => !ObservationConditionEvaluator.Evaluate(c, route, State))
+                .Select(c => c.Description ?? c.Type + ": " + c.StringValue).ToArray();
+            if (unmet.Length > 0) return "必要条件: " + string.Join(", ", unmet);
             if (action.Kind == NNNActionKind.Investigation && action.AddedKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains)) return "調査済みです。";
             if (OperationSatisfied(action)) return "世界条件は成立済みです。";
             return null;
@@ -343,6 +362,8 @@ namespace NNN
             EnsureDayActive();
             if (DayContext.Phase != ObservationDayPhase.CatReport) throw new InvalidOperationException("CAT REPORT must be shown first.");
             DayContext.Phase = ObservationDayPhase.ActionSelection;
+            dailyActionIds = GetNNNActionOptions().Select(x => x.Definition.Id).ToList();
+            foreach (string id in dailyActionIds) State.ActionLastOfferedDay[id] = DayContext.Day;
         }
 
         public InvestigationResult ApplyNNNAction(string actionId) => ApplyNNNAction(actionId, 24f);
@@ -365,13 +386,13 @@ namespace NNN
             {
                 var operations = route.Actions.Where(x => x.Kind == NNNActionKind.Operation).ToList();
                 var discovered = operations.Where(IsDiscovered).Select(x => x.Id).ToHashSet();
-                var unlocked = operations.Where(x => IsDiscovered(x) && MeetsKnowledge(x)).Select(x => x.Id).ToHashSet();
+                var unlocked = operations.Where(x => IsDiscovered(x) && MeetsRequirements(x) && !OperationSatisfied(x)).Select(x => x.Id).ToHashSet();
                 var added = action.AddedKnowledgeTags.Where(x => !State.PlayerKnowledgeFlags.Contains(x)).ToList();
                 State.PlayerKnowledgeFlags.UnionWith(added);
                 currentResult.Investigation = new InvestigationResult { InvestigationId = action.Id, ResultText = action.ResultText,
                     AddedKnowledgeTags = added.AsReadOnly(),
                     NewlyDiscoveredOperationIds = operations.Where(x => IsDiscovered(x) && !discovered.Contains(x.Id)).Select(x => x.Id).ToList().AsReadOnly(),
-                    NewlyUnlockedOperationIds = operations.Where(x => IsDiscovered(x) && MeetsKnowledge(x) && !unlocked.Contains(x.Id)).Select(x => x.Id).ToList().AsReadOnly() };
+                    NewlyUnlockedOperationIds = operations.Where(x => IsDiscovered(x) && MeetsRequirements(x) && !OperationSatisfied(x) && !unlocked.Contains(x.Id)).Select(x => x.Id).ToList().AsReadOnly() };
             }
             else if (action.Kind == NNNActionKind.Operation)
                 State.PendingOperations.Add(new PendingOperationEffect(action.Id, DayContext.Day + 1, action.Effect));
@@ -452,8 +473,11 @@ namespace NNN
                 foreach (var memory in definition.AddMemories) State.MemoryFlags.Add(memory);
             }
             // 定義を直接UIへ渡さず実行結果へ複製し、表示とシミュレーションの依存を分離する。
+            foreach (string tag in definition.AddKnowledgeTags)
+                if (State.PlayerKnowledgeFlags.Add(tag)) result.AddedKnowledgeTags.Add(tag);
             foreach (var log in definition.Logs)
-                result.LogEntries.Add(new ObservationLogEntry { Time = log.Time, Actor = log.Actor, ActionId = log.ActionId, Text = log.Text, Importance = log.Importance });
+                result.LogEntries.Add(new ObservationLogEntry { EventId = definition.Id, SceneId = log.SceneId,
+                    Time = log.Time, Actor = log.Actor, ActionId = log.ActionId, Text = log.Text, Importance = log.Importance });
         }
 
         private void EnsureDayActive()

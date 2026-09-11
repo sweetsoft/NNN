@@ -219,8 +219,9 @@ namespace NNN.Editor
             int maxMajorStreak = MaxConsecutive(results.Select(day => !string.IsNullOrEmpty(day.MajorEventId)));
             int maxNoMajorStreak = MaxConsecutive(results.Select(day => string.IsNullOrEmpty(day.MajorEventId)));
             // DAY1〜3の導入Milestoneは連続を仕様とする。通常期間の密度警告は残す。
-            int postIntroStreak = MaxConsecutive(results.Where(day => day.Day > 3).Select(day => !string.IsNullOrEmpty(day.MajorEventId)));
-            if (postIntroStreak >= 2) warnings.Add("導入後のMajor Eventが" + postIntroStreak + "日連続");
+            int postIntroStreak = MaxConsecutive(results.Select(day => !string.IsNullOrEmpty(day.MajorEventId)
+                && day.MajorEventRole != ObservationEventRole.Core && day.MajorEventCategory != ObservationEventCategory.Milestone));
+            if (postIntroStreak >= 2) warnings.Add("任意Relationship / Problemイベントが" + postIntroStreak + "日連続");
             if (maxNoMajorStreak >= 10) failures.Add("Major Eventなしが" + maxNoMajorStreak + "日連続");
             if (days.TryGetValue("REL_PLAY_TOGETHER", out int playDay) && playDay <= 10) failures.Add("後半イベントをDAY10以前に消化");
 
