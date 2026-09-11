@@ -53,6 +53,14 @@ namespace NNN
                 text.AppendLine("Normal: " + (day.NormalActionIds.Count == 0 ? "none" : string.Join(", ", day.NormalActionIds.ToArray())));
                 text.AppendLine("Major: " + (string.IsNullOrEmpty(day.MajorEventId) ? "none" : day.MajorEventId));
                 text.AppendLine("State: " + day.StateAfter);
+                text.AppendLine("CAT REPORT: " + day.CatReport?.Text);
+                if (day.Investigation != null)
+                {
+                    text.AppendLine("調査結果: " + day.Investigation.ResultText);
+                    text.AppendLine("KNOWLEDGE: " + string.Join(", ", day.Investigation.AddedKnowledgeTags));
+                    text.AppendLine("NEW OPERATION: " + string.Join(", ", day.Investigation.NewlyDiscoveredOperationIds));
+                    text.AppendLine("UNLOCKED: " + string.Join(", ", day.Investigation.NewlyUnlockedOperationIds));
+                }
             }
             return text.ToString();
         }

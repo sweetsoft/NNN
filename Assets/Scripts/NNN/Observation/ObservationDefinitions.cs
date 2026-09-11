@@ -50,7 +50,8 @@ namespace NNN
         HasMemory, MissingMemory, EventOccurred, EventNotOccurred,
         DaysSinceLastMajorAtLeast, CatTrait, HumanTrait,
         CohabitationAtLeast, CohabitationAtMost, AcceptanceAtLeast, AcceptanceAtMost,
-        AdaptationAtLeast, AdaptationAtMost, HasHomePreparation, MissingHomePreparation
+        AdaptationAtLeast, AdaptationAtMost, HasHomePreparation, MissingHomePreparation,
+        HasWorldFlag, MissingWorldFlag, HasKnowledgeTag
     }
 
     [Serializable]
@@ -73,6 +74,9 @@ namespace NNN
         /// <summary>条件成立だけで同居へ遷移しない。開始イベントが別途必要。</summary>
         public bool CanStartCohabitation => Cohabitation == CohabitationState.Visiting
             && HumanAcceptance >= HumanAcceptanceState.Welcoming && HasPreparation(HomePreparation.All);
+        public bool CanTransitionTo(CohabitationState target) => target == Cohabitation
+            || (Cohabitation == CohabitationState.Outside && target == CohabitationState.Visiting)
+            || (target == CohabitationState.LivingTogether && CanStartCohabitation);
         /// <summary>DaySimulationResultに変更前後の独立したスナップショットを残す。</summary>
         public RelationshipState Clone() => (RelationshipState)MemberwiseClone();
         public override string ToString() => "Cohabitation=" + Cohabitation + " / Acceptance=" + HumanAcceptance
@@ -106,9 +110,8 @@ namespace NNN
             if ((AddHomePreparation & RemoveHomePreparation) != HomePreparation.None)
                 throw new InvalidOperationException("The same preparation cannot be added and removed together.");
             // 遷移前の条件を検証し、失敗時は他の状態軸も変更しない。
-            if (SetCohabitation && Cohabitation == CohabitationState.LivingTogether
-                && state.Cohabitation != CohabitationState.LivingTogether && !state.CanStartCohabitation)
-                throw new InvalidOperationException("Cohabitation requires a visit, acceptance and basic preparation before the event.");
+            if (SetCohabitation && !state.CanTransitionTo(Cohabitation))
+                throw new InvalidOperationException("Normal events only advance one stage; living together requires prior acceptance and preparation. Dissolution requires a separate explicit API.");
             if (SetHumanToCat) state.HumanToCat = HumanToCat;
             if (SetCatWariness) state.CatWariness = CatWariness;
             if (SetCohabitation) state.Cohabitation = Cohabitation;
@@ -179,6 +182,8 @@ namespace NNN
         public CatDefinition Cat;
         public DispatchMethod DispatchMethod = DispatchMethod.Visit;
         public List<ObservationEventDefinition> Events = new List<ObservationEventDefinition>();
+        public List<NNNActionDefinition> Actions = new List<NNNActionDefinition>(NNNActionCatalog.All);
+        public List<CatReportDefinition> CatReports = new List<CatReportDefinition>();
     }
 
     [Serializable]
@@ -201,25 +206,11 @@ namespace NNN
         public string ActionId;
     }
 
-    [Serializable]
-    /// <summary>未来イベントを固定せず、指定期間中の候補Priorityだけを変える一時効果。</summary>
-    public sealed class ObservationSimulationModifier
-    {
-        public string Id;
-        public int AppliedDay;
-        public float AppliedTime;
-        public int ActiveFromDay;
-        public int ExpireDay;
-        public string TargetEventId;
-        public int PriorityBonus;
-
-        public bool IsActive(int day, string eventId)
-            => day >= ActiveFromDay && day <= ExpireDay && TargetEventId == eventId;
-    }
-
     /// <summary>逐次実行中の一日だけ存在し、EndDay後は破棄されるRuntime情報。</summary>
     public sealed class ObservationDayContext
     {
+        public ObservationDayPhase Phase { get; internal set; } = ObservationDayPhase.Observing;
+        public CatReportResult CatReport { get; internal set; }
         public int Day { get; internal set; }
         public float CurrentTime { get; internal set; }
         public bool HasMajorEventOccurred { get; internal set; }
@@ -235,6 +226,8 @@ namespace NNN
     /// </summary>
     public sealed class DaySimulationResult
     {
+        public CatReportResult CatReport;
+        public InvestigationResult Investigation;
         public int Day;
         public List<string> NormalActionIds = new List<string>();
         public string MajorEventId;

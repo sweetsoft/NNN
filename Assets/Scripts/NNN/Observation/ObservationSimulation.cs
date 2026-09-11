@@ -21,7 +21,8 @@ namespace NNN
         /// <summary>前日まで何日連続で選ばれたかを保持し、候補条件を変えずに表示の単調さだけを抑える。</summary>
         public Dictionary<string, int> NormalActionStreaks { get; } = new Dictionary<string, int>();
         public HashSet<string> PlayerKnowledgeFlags { get; } = new HashSet<string>();
-        public List<ObservationSimulationModifier> Modifiers { get; } = new List<ObservationSimulationModifier>();
+        public HashSet<string> WorldFlags { get; } = new HashSet<string>();
+        public List<PendingOperationEffect> PendingOperations { get; } = new List<PendingOperationEffect>();
         public List<ObservationPlayerActionRecord> PlayerActionHistory { get; } = new List<ObservationPlayerActionRecord>();
     }
 
@@ -34,17 +35,18 @@ namespace NNN
             if (definition == null || state.CurrentDay < definition.EarliestDay || state.CurrentDay > definition.LatestDay) return false;
             if (!definition.Repeatable && state.OccurredEventIds.Contains(definition.Id)) return false;
             if (definition.StateChange.SetCohabitation
-                && definition.StateChange.Cohabitation == CohabitationState.LivingTogether
-                && state.Relationship.Cohabitation != CohabitationState.LivingTogether
-                && !state.Relationship.CanStartCohabitation) return false;
+                && !state.Relationship.CanTransitionTo(definition.StateChange.Cohabitation)) return false;
             // Conditionsが空なら期間と単発性だけで候補化する。複数条件はすべて満たす必要がある。
             return definition.Conditions.All(condition => Evaluate(condition, route, state));
         }
 
-        private static bool Evaluate(ObservationEventCondition c, ObservationRouteDefinition route, ObservationSimulationState s)
+        public static bool Evaluate(ObservationEventCondition c, ObservationRouteDefinition route, ObservationSimulationState s)
         {
             switch (c.Type)
             {
+                case ObservationConditionType.HasWorldFlag: return s.WorldFlags.Contains(c.StringValue);
+                case ObservationConditionType.MissingWorldFlag: return !s.WorldFlags.Contains(c.StringValue);
+                case ObservationConditionType.HasKnowledgeTag: return s.PlayerKnowledgeFlags.Contains(c.StringValue);
                 case ObservationConditionType.HumanStateAtLeast: return s.Relationship.HumanToCat >= c.HumanState;
                 case ObservationConditionType.HumanStateAtMost: return s.Relationship.HumanToCat <= c.HumanState;
                 // CatWarinessだけはHigh(0)→Relaxed(3)の順で「値が大きいほど警戒が低い」。
@@ -86,11 +88,6 @@ namespace NNN
         /// Major Eventを一日最大一件選ぶ。Milestone、翌日抑制、期限補正、発生間隔、優先度の順に判断する。
         /// </summary>
         public ObservationEventDefinition SelectMajorEvent(int day, IList<ObservationEventDefinition> candidates, ObservationSimulationState state)
-            => SelectMajorEvent(day, candidates, state, null);
-
-        /// <summary>有効Modifierを候補スコアへ加える逐次実行用入口。Modifierなしでは従来入口と同じ乱数列を使う。</summary>
-        public ObservationEventDefinition SelectMajorEvent(int day, IList<ObservationEventDefinition> candidates,
-            ObservationSimulationState state, IList<ObservationSimulationModifier> modifiers)
         {
             // 導入と期間末のMilestoneは通常のクールダウンや確率に左右されない。
             var milestone = candidates.Where(x => x.Category == ObservationEventCategory.Milestone).OrderByDescending(x => x.BasePriority).FirstOrDefault();
@@ -122,7 +119,6 @@ namespace NNN
                 {
                     Event = x,
                     Score = x.BasePriority + PhaseBonus(day, x) + DeadlineBonus(day, x) + CoreBonus(day, x) +
-                        ModifierBonus(day, x, modifiers) +
                         OptionalOpportunityBonus(x, nearestCoreDeadline) +
                         (gap >= 4 && x.Category == ObservationEventCategory.Relationship ? 25 : 0) + random.Next(0, 21)
                 })
@@ -131,8 +127,6 @@ namespace NNN
                 .First().Event;
         }
 
-        private static int ModifierBonus(int day, ObservationEventDefinition definition, IList<ObservationSimulationModifier> modifiers)
-            => modifiers == null ? 0 : modifiers.Where(x => x != null && x.IsActive(day, definition.Id)).Sum(x => x.PriorityBonus);
 
         /// <summary>成立中の通常候補から1～3件を選び、直近6件に含まれる行動へ減点して連続表示を避ける。</summary>
         public List<ObservationEventDefinition> SelectNormalActions(IList<ObservationEventDefinition> candidates, ObservationSimulationState state)
@@ -191,7 +185,7 @@ namespace NNN
         private readonly List<ScheduledObservationEvent> pendingEvents = new List<ScheduledObservationEvent>();
         private readonly Dictionary<string, int> normalSelectionOrder = new Dictionary<string, int>();
         private DaySimulationResult currentResult;
-        private bool generatedSinceLastAction;
+        private bool eventsGenerated;
         private int nextSelectionOrder;
         public ObservationSimulationState State { get; } = new ObservationSimulationState();
         public ObservationDayContext DayContext { get; private set; }
@@ -217,23 +211,26 @@ namespace NNN
             if (day != State.CurrentDay + 1 || day < 1 || day > 30)
                 throw new ArgumentOutOfRangeException(nameof(day), "Days must be simulated once, in order, from DAY1 to DAY30.");
             State.CurrentDay = day;
+            foreach (var pending in State.PendingOperations.Where(x => x.ActiveFromDay <= day).ToList())
+            { pending.Effect.Apply(State); State.PendingOperations.Remove(pending); }
             DayContext = new ObservationDayContext { Day = day, CurrentTime = 0f };
             currentResult = new DaySimulationResult { Day = day, StateBefore = State.Relationship.Clone() };
             pendingEvents.Clear();
             normalSelectionOrder.Clear();
-            generatedSinceLastAction = false;
+            eventsGenerated = false;
             nextSelectionOrder = 0;
         }
 
         /// <summary>
-        /// 呼出時点の状態と時刻から次イベントを返す。選択済みの残りはAction時に破棄されるため、過去だけが確定する。
+        /// 観察中だけ次イベントを返す。日末のACTION後には新しい候補を生成しない。
         /// </summary>
         public ObservationEventDefinition GenerateNextEvent()
         {
             EnsureDayActive();
+            if (DayContext.Phase != ObservationDayPhase.Observing) return null;
             if (pendingEvents.Count > 0) return pendingEvents[0].Definition;
-            if (generatedSinceLastAction) return null;
-            generatedSinceLastAction = true;
+            if (eventsGenerated) return null;
+            eventsGenerated = true;
 
             var eligible = route.Events.Where(x => ObservationConditionEvaluator.Evaluate(x, route, State))
                 .Where(x => !DayContext.ExecutedEventIds.Contains(x.Id) && EventStartTime(x) >= DayContext.CurrentTime)
@@ -245,7 +242,7 @@ namespace NNN
 
             // 呼出順は旧SimulateDayと同じMajor→Normalとし、Actionなしの乱数消費順を維持する。
             ObservationEventDefinition major = DayContext.HasMajorEventOccurred ? null : director.SelectMajorEvent(
-                DayContext.Day, eligible.Where(x => x.Category != ObservationEventCategory.Normal).ToList(), State, State.Modifiers);
+                DayContext.Day, eligible.Where(x => x.Category != ObservationEventCategory.Normal).ToList(), State);
             List<ObservationEventDefinition> selectedNormal = director.SelectNormalActions(normal, State);
             foreach (ObservationEventDefinition selected in selectedNormal)
             {
@@ -283,34 +280,80 @@ namespace NNN
             return definition;
         }
 
-        /// <summary>ロック理由を含む選択肢。参照だけでは乱数・履歴を変更しない。</summary>
-        public List<NNNActionOption> GetNNNActionOptions()
-            => NNNActionCatalog.All.Select(x => new NNNActionOption(x, ActionUnavailableReason(x))).ToList();
+        /// <summary>日次表示は最大4件（SKIP含む）。全定義の検査にはincludeHiddenを使う。</summary>
+        public List<NNNActionOption> GetNNNActionOptions(bool includeHidden = false)
+        {
+            var options = route.Actions.Select(x => new NNNActionOption(x,
+                !IsDiscovered(x) ? NNNActionVisibility.Hidden : ActionUnavailableReason(x) == null
+                    ? NNNActionVisibility.Available : NNNActionVisibility.VisibleLocked, ActionUnavailableReason(x))).ToList();
+            if (includeHidden) return options;
+            var visible = options.Where(x => x.Visibility != NNNActionVisibility.Hidden
+                && x.Definition.Kind != NNNActionKind.Skip
+                && !(x.Definition.Kind == NNNActionKind.Investigation && x.Definition.AddedKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains))
+                && !OperationSatisfied(x.Definition))
+                .OrderByDescending(x => x.IsAvailable).ThenByDescending(x => x.Definition.Kind == NNNActionKind.Operation)
+                .Take(3).ToList();
+            visible.AddRange(options.Where(x => x.Definition.Kind == NNNActionKind.Skip));
+            return visible;
+        }
 
+        private bool IsDiscovered(NNNActionDefinition action)
+            => action.DiscoveryKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains);
+        private bool MeetsKnowledge(NNNActionDefinition action)
+            => action.RequiredKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains);
+        private bool OperationSatisfied(NNNActionDefinition action)
+            => action.Kind == NNNActionKind.Operation
+                && action.Effect.AddWorldFlags.All(State.WorldFlags.Contains)
+                && action.Effect.RemoveWorldFlags.All(x => !State.WorldFlags.Contains(x))
+                && action.Effect.AddKnowledgeFlags.All(State.PlayerKnowledgeFlags.Contains)
+                && State.Relationship.HasPreparation(action.Effect.AddHomePreparation)
+                && (State.Relationship.HomeReadiness & action.Effect.RemoveHomePreparation) == 0;
         private string ActionUnavailableReason(NNNActionDefinition action)
         {
             if (DayContext == null) return "一日を開始してください。";
             if (DayContext.PlayerActionRecords.Count > 0) return "本日のNNN ACTIONは使用済みです。";
-            if (action.Kind == NNNActionKind.Investigation)
-                return State.PlayerKnowledgeFlags.Contains(action.Knowledge) ? "調査済みです。" : null;
-            if (action.Kind != NNNActionKind.Operation) return null;
-            if (!State.PlayerKnowledgeFlags.Contains(action.Knowledge)) return "対応する調査で情報を得ると解禁されます。";
-            var target = route.Events.FirstOrDefault(x => x.Id == action.TargetEventId);
-            if (target == null) return "この案件には対応する出来事がありません。";
-            if (State.OccurredEventIds.Contains(target.Id)) return "対応する出来事は発生済みです。";
-            if (target.LatestDay < DayContext.Day + 1) return "効果を活かせる期間が終了しています。";
-            if (target.EarliestDay > DayContext.Day + action.DurationDays) return "まだ工作の効果を活かせる時期ではありません。";
-            if (State.Modifiers.Any(x => x.Id == action.Id && x.ExpireDay >= DayContext.Day)) return "同じ工作の効果が継続中です。";
+            if (DayContext.Phase != ObservationDayPhase.ActionSelection) return "観察とCAT REPORTを終了してください。";
+            if (!IsDiscovered(action)) return "未発見です。";
+            var missing = action.RequiredKnowledgeTags.Where(x => !State.PlayerKnowledgeFlags.Contains(x)).ToArray();
+            if (missing.Length > 0) return "必要情報: " + string.Join(", ", missing);
+            if (action.Kind == NNNActionKind.Investigation && action.AddedKnowledgeTags.All(State.PlayerKnowledgeFlags.Contains)) return "調査済みです。";
+            if (OperationSatisfied(action)) return "世界条件は成立済みです。";
             return null;
         }
 
-        /// <summary>調査・工作・SKIPのいずれかを一日一回実行する。検証失敗時は状態を変更しない。</summary>
-        public void ApplyNNNAction(string actionId, float time)
+        /// <summary>観察を最後まで消化してから、猫の一言を一度だけ生成する。</summary>
+        public CatReportResult CompleteObservation()
+        {
+            EnsureDayActive();
+            if (DayContext.Phase != ObservationDayPhase.Observing) return DayContext.CatReport;
+            while (GenerateNextEvent() != null) ExecuteNextEvent();
+            var definition = route.CatReports.Where(x => x.Conditions.All(c => ObservationConditionEvaluator.Evaluate(c, route, State))
+                && (string.IsNullOrEmpty(x.RequiredTodayEventId) || DayContext.ExecutedEventIds.Contains(x.RequiredTodayEventId)))
+                .OrderByDescending(x => x.Priority).FirstOrDefault();
+            DayContext.CatReport = new CatReportResult { Day = DayContext.Day,
+                Id = definition?.Id ?? "CAT_REPORT_REST", Text = definition?.Text ?? "今日はここで休んだ。" };
+            currentResult.CatReport = DayContext.CatReport;
+            DayContext.CurrentTime = 24f;
+            DayContext.Phase = ObservationDayPhase.CatReport;
+            return DayContext.CatReport;
+        }
+
+        public void CompleteCatReport()
+        {
+            EnsureDayActive();
+            if (DayContext.Phase != ObservationDayPhase.CatReport) throw new InvalidOperationException("CAT REPORT must be shown first.");
+            DayContext.Phase = ObservationDayPhase.ActionSelection;
+        }
+
+        public InvestigationResult ApplyNNNAction(string actionId) => ApplyNNNAction(actionId, 24f);
+
+        /// <summary>日末に一回選択。調査結果は即時表示し、工作は翌朝の条件だけを変更する。</summary>
+        public InvestigationResult ApplyNNNAction(string actionId, float time)
         {
             EnsureDayActive();
             if (float.IsNaN(time) || float.IsInfinity(time) || time < DayContext.CurrentTime || time > 24f)
                 throw new ArgumentOutOfRangeException(nameof(time));
-            var action = NNNActionCatalog.Find(actionId);
+            var action = route.Actions.FirstOrDefault(x => x.Id == actionId);
             if (action == null) throw new ArgumentException("Unknown NNN ACTION: " + actionId, nameof(actionId));
             string reason = ActionUnavailableReason(action);
             if (reason != null) throw new InvalidOperationException(reason);
@@ -319,21 +362,29 @@ namespace NNN
             DayContext.PlayerActionRecords.Add(record);
             State.PlayerActionHistory.Add(record);
             if (action.Kind == NNNActionKind.Investigation)
-                State.PlayerKnowledgeFlags.Add(action.Knowledge);
+            {
+                var operations = route.Actions.Where(x => x.Kind == NNNActionKind.Operation).ToList();
+                var discovered = operations.Where(IsDiscovered).Select(x => x.Id).ToHashSet();
+                var unlocked = operations.Where(x => IsDiscovered(x) && MeetsKnowledge(x)).Select(x => x.Id).ToHashSet();
+                var added = action.AddedKnowledgeTags.Where(x => !State.PlayerKnowledgeFlags.Contains(x)).ToList();
+                State.PlayerKnowledgeFlags.UnionWith(added);
+                currentResult.Investigation = new InvestigationResult { InvestigationId = action.Id, ResultText = action.ResultText,
+                    AddedKnowledgeTags = added.AsReadOnly(),
+                    NewlyDiscoveredOperationIds = operations.Where(x => IsDiscovered(x) && !discovered.Contains(x.Id)).Select(x => x.Id).ToList().AsReadOnly(),
+                    NewlyUnlockedOperationIds = operations.Where(x => IsDiscovered(x) && MeetsKnowledge(x) && !unlocked.Contains(x.Id)).Select(x => x.Id).ToList().AsReadOnly() };
+            }
             else if (action.Kind == NNNActionKind.Operation)
-                State.Modifiers.Add(new ObservationSimulationModifier
-                {
-                    Id = action.Id, AppliedDay = DayContext.Day, AppliedTime = time,
-                    ActiveFromDay = DayContext.Day + 1, ExpireDay = DayContext.Day + action.DurationDays,
-                    TargetEventId = action.TargetEventId, PriorityBonus = action.PriorityBonus
-                });
-            // 調査とSKIPは世界に作用しない。工作も翌日から有効なので当日の抽選をやり直さない。
+                State.PendingOperations.Add(new PendingOperationEffect(action.Id, DayContext.Day + 1, action.Effect));
+            DayContext.Phase = ObservationDayPhase.Completed;
+            return currentResult.Investigation;
         }
         /// <summary>当日結果を確定し、表示ログと旧NormalActionIds順、翌日用Recent状態を整える。</summary>
         public DaySimulationResult EndDay()
         {
             EnsureDayActive();
-            if (pendingEvents.Count > 0) throw new InvalidOperationException("Execute pending events before ending the day.");
+            if (DayContext.Phase == ObservationDayPhase.Observing) CompleteObservation();
+            if (DayContext.Phase == ObservationDayPhase.CatReport) CompleteCatReport();
+            if (DayContext.Phase == ObservationDayPhase.ActionSelection) ApplyNNNAction(NNNActionCatalog.Skip);
             currentResult.NormalActionIds = currentResult.NormalActionIds.OrderBy(id => normalSelectionOrder[id]).ToList();
             UpdateNormalActionStreaks(currentResult.NormalActionIds);
             foreach (string id in currentResult.NormalActionIds)

@@ -10,6 +10,20 @@ namespace NNN.Editor
     {
         public static void Verify()
         {
+            foreach (CohabitationState from in Enum.GetValues(typeof(CohabitationState)))
+                foreach (CohabitationState to in Enum.GetValues(typeof(CohabitationState)))
+                {
+                    var transitionState = new RelationshipState { Cohabitation = from,
+                        HumanAcceptance = HumanAcceptanceState.Welcoming, HomeReadiness = HomePreparation.All };
+                    string original = transitionState.ToString();
+                    bool failed = false;
+                    try { new RelationshipStateChange { SetCohabitation = true, Cohabitation = to,
+                        SetHumanToCat = true, HumanToCat = HumanToCatState.Care }.Apply(transitionState); }
+                    catch (InvalidOperationException) { failed = true; }
+                    bool allowed = from == to || (from == CohabitationState.Outside && to == CohabitationState.Visiting)
+                        || (from == CohabitationState.Visiting && to == CohabitationState.LivingTogether);
+                    Check(failed != allowed && (!failed || transitionState.ToString() == original), "Transition matrix must reject atomically: " + from + " -> " + to);
+                }
             var state = new RelationshipState { Cohabitation = CohabitationState.Visiting };
             var start = new RelationshipStateChange { SetCohabitation = true, Cohabitation = CohabitationState.LivingTogether };
             Check(!state.CanStartCohabitation, "Unprepared visit must not start cohabitation.");
@@ -28,6 +42,7 @@ namespace NNN.Editor
             Check(state.Cohabitation == CohabitationState.Visiting, "Eligibility must not auto-start cohabitation.");
             var ready = state.Clone();
             start.Apply(state);
+            Check(state.HumanAcceptance == HumanAcceptanceState.Welcoming, "Cohabitation does not imply commitment.");
             Check(state.CatWariness == CatWarinessState.High && state.CatAdaptation == CatAdaptationState.Unfamiliar,
                 "Cohabitation must allow a wary, unfamiliar cat.");
             new RelationshipStateChange { SetCatAdaptation = true, CatAdaptation = CatAdaptationState.AtEase }.Apply(state);

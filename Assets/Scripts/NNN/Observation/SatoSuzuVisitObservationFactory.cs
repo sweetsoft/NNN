@@ -21,7 +21,34 @@ namespace NNN
             route.DispatchMethod = DispatchMethod.Visit;
             AddNormalEvents(route.Events);
             AddMajorEvents(route.Events);
+            AddOperationObservations(route.Events);
+            route.CatReports.Add(new CatReportDefinition { Id = "REPORT_PLAY", Priority = 100,
+                RequiredTodayEventId = "REL_PLAY_TOGETHER", Text = "今日は遊んだ。" });
+            route.CatReports.Add(new CatReportDefinition { Id = "REPORT_DISTANCE", Priority = 100,
+                RequiredTodayEventId = "PROBLEM_OVERTOUCH_CAT_PUNCH", Text = "近すぎた。" });
+            route.CatReports.Add(new CatReportDefinition { Id = "REPORT_EXPLORE", Priority = 50,
+                RequiredTodayEventId = "NORMAL_CAT_EXPLORE_ROOM", Text = "今日は部屋を歩いた。" });
             return route;
+        }
+
+        // 世界条件から複数の反応が候補になる。既存のCore進行条件は変更しない。
+        private static void AddOperationObservations(List<ObservationEventDefinition> events)
+        {
+            var signal = new ObservationEventCondition { Type = ObservationConditionType.HasWorldFlag,
+                StringValue = WorldFlag.HumanKnowsCatBoundarySignal };
+            events.Add(Normal("NORMAL_SIGNAL_NOTICED", 60,
+                Log(16.0f, ObservationActor.Human, "SIGNAL_NOTICED", "スズが尾を動かすと、佐藤が伸ばしかけた手を止める"),
+                signal, CohabitationAtLeast(CohabitationState.Visiting)));
+            events.Add(Normal("NORMAL_SIGNAL_MISSED", 60,
+                Log(17.0f, ObservationActor.Cat, "SIGNAL_MISSED", "佐藤の手が近づき、スズが一歩離れる。佐藤が手を戻す"),
+                signal, CohabitationAtLeast(CohabitationState.Visiting)));
+            events.Add(Normal("NORMAL_TOY_READY", 60,
+                Log(19.5f, ObservationActor.Human, "TOY_READY", "佐藤がおもちゃを床に置く。スズが離れた場所から見る"),
+                new ObservationEventCondition { Type = ObservationConditionType.HasWorldFlag, StringValue = WorldFlag.PlayOpportunityPrepared },
+                CohabitationAtLeast(CohabitationState.Visiting)));
+            events.Add(Normal("NORMAL_CHECK_SHELF", 60,
+                Log(12.0f, ObservationActor.Human, "CHECK_SHELF", "佐藤が棚の端の小物を奥へ寄せる"),
+                new ObservationEventCondition { Type = ObservationConditionType.HasWorldFlag, StringValue = WorldFlag.HumanKnowsHomeObjectRisk }));
         }
 
         /// <summary>

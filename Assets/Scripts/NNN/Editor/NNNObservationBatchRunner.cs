@@ -58,6 +58,7 @@ namespace NNN.Editor
         public static void VerifyMultipleSeeds()
         {
             CohabitationStateVerification.Verify();
+            NNNActionVerification.Verify();
             ValidateStableEqualTimeOrdering();
             foreach (int seed in VerificationSeeds)
             {
