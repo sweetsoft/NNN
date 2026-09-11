@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -63,13 +63,13 @@ namespace NNN
             events.Add(Normal("NORMAL_CAT_WATCH_HUMAN", 70, Log(8.2f, ObservationActor.Cat, "CAT_WATCH_HUMAN", "スズが離れた場所から佐藤を見ている"), WarinessAtLeast(CatWarinessState.Medium)));
             events.Add(Normal("NORMAL_HUMAN_WATCH_CAT", 60, Log(18.1f, ObservationActor.Human, "HUMAN_WATCH_CAT", "佐藤がスズのいる方を見る")));
             events.Add(Normal("NORMAL_CAT_REST_FAR", 75, Log(13.0f, ObservationActor.Cat, "CAT_REST_FAR", "スズが佐藤から離れた場所で伏せる"), WarinessAtLeast(CatWarinessState.Medium)));
-            events.Add(Normal("NORMAL_CAT_REST_NEAR", 72, Log(14.0f, ObservationActor.Cat, "CAT_REST_NEAR", "スズが佐藤の近くで伏せる"), WarinessAtMost(CatWarinessState.Low), SettlementAtLeast(SettlementState.Territory)));
+            events.Add(Normal("NORMAL_CAT_REST_NEAR", 72, Log(14.0f, ObservationActor.Cat, "CAT_REST_NEAR", "スズが佐藤の近くで伏せる"), WarinessAtMost(CatWarinessState.Low), CohabitationAtLeast(CohabitationState.Visiting)));
             events.Add(Normal("NORMAL_CAT_GROOMING", 55, Log(15.3f, ObservationActor.Cat, "CAT_GROOMING", "スズが前足を舐めて毛づくろいする"), WarinessAtMost(CatWarinessState.Low)));
-            events.Add(Normal("NORMAL_CAT_EXPLORE_ROOM", 68, Log(10.4f, ObservationActor.Cat, "CAT_EXPLORE_ROOM", "スズが部屋の壁沿いを歩く"), SettlementAtLeast(SettlementState.Territory), CatTrait("exploratory")));
-            events.Add(Normal("NORMAL_CAT_LOOK_WINDOW", 52, Log(11.2f, ObservationActor.Cat, "CAT_LOOK_WINDOW", "スズが窓の外を見る"), SettlementAtLeast(SettlementState.Territory)));
+            events.Add(Normal("NORMAL_CAT_EXPLORE_ROOM", 68, Log(10.4f, ObservationActor.Cat, "CAT_EXPLORE_ROOM", "スズが部屋の壁沿いを歩く"), CohabitationAtLeast(CohabitationState.Visiting), CatTrait("exploratory")));
+            events.Add(Normal("NORMAL_CAT_LOOK_WINDOW", 52, Log(11.2f, ObservationActor.Cat, "CAT_LOOK_WINDOW", "スズが窓の外を見る"), CohabitationAtLeast(CohabitationState.Visiting)));
             events.Add(Normal("NORMAL_HUMAN_SMARTPHONE", 45, Log(20.0f, ObservationActor.Human, "HUMAN_SMARTPHONE", "佐藤が椅子に座ってスマートフォンを見る")));
             events.Add(Normal("NORMAL_HUMAN_MEAL", 48, Log(19.1f, ObservationActor.Human, "HUMAN_MEAL", "佐藤がテーブルで食事をする")));
-            events.Add(Normal("NORMAL_SHARED_ROOM", 70, Log(21.0f, ObservationActor.Environment, "SHARED_ROOM", "佐藤とスズが同じ部屋にいる"), WarinessAtMost(CatWarinessState.Low), SettlementAtLeast(SettlementState.Territory)));
+            events.Add(Normal("NORMAL_SHARED_ROOM", 70, Log(21.0f, ObservationActor.Environment, "SHARED_ROOM", "佐藤とスズが同じ部屋にいる"), WarinessAtMost(CatWarinessState.Low), CohabitationAtLeast(CohabitationState.Visiting)));
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace NNN
         {
             // 訪問で起きた観測事実だけを初期履歴にし、「訪問だから警戒度が下がる」といった直接補正は行わない。
             events.Add(Event("VISIT_FIRST_CONTACT", ObservationEventCategory.Milestone, 1, 1, 1000,
-                Change(HumanToCatState.Watch, CatWarinessState.High, SettlementState.Visiting),
+                Change(HumanToCatState.Watch, CatWarinessState.High, null, HumanAcceptanceState.Tolerating),
                 History(RelationshipHistoryFlag.Seen, RelationshipHistoryFlag.Approached, RelationshipHistoryFlag.Watered),
                 Memories(RelationshipMemory.HumanWaited), null,
                 Log(18.0f, ObservationActor.Cat, "CAT_WAIT_ENTRANCE", "スズが玄関前にいる"),
@@ -97,13 +97,27 @@ namespace NNN
                 Change(null, CatWarinessState.Low, null), null, null,
                 new[] { HistoryHas(RelationshipHistoryFlag.Watered), WarinessAtMost(CatWarinessState.Medium) },
                 Log(18.4f, ObservationActor.Cat, "CAT_DRINK", "スズが佐藤のいる場所で水を飲む")));
-            events.Add(Event("REL_ENTER_HOME", ObservationEventCategory.Relationship, 7, 11, 95,
-                Change(null, null, SettlementState.Territory), History(RelationshipHistoryFlag.EnteredHome), Memories(RelationshipMemory.SafeEntry),
-                new[] { SettlementAtMost(SettlementState.Visiting), WarinessAtMost(CatWarinessState.Medium) },
-                Log(18.6f, ObservationActor.Cat, "CAT_ENTER_HOME", "スズが玄関から室内へ入る")));
+            // デモ導入は接触・初入室・同居を連日に描く。警戒の低下は入室の必須条件にしない。
+            events.Add(Event("REL_ENTER_HOME", ObservationEventCategory.Milestone, 2, 2, 1000,
+                Change(null, null, CohabitationState.Visiting, HumanAcceptanceState.Welcoming,
+                    null, HomePreparation.All),
+                History(RelationshipHistoryFlag.EnteredHome), Memories(RelationshipMemory.SafeEntry),
+                new[] { HistoryHas(RelationshipHistoryFlag.Seen), CohabitationAtMost(CohabitationState.Outside) },
+                Log(18.0f, ObservationActor.Human, "HUMAN_PREPARE_HOME", "佐藤が食事と水、トイレ、隠れられる寝床を用意し、窓と危険物を確認する"),
+                Log(18.6f, ObservationActor.Cat, "CAT_ENTER_HOME", "スズが玄関から室内へ入り、用意された寝床の奥に隠れる"),
+                Log(18.8f, ObservationActor.Human, "HUMAN_PREPARE_CARE", "佐藤が翌日分の食事も用意して、寝床から離れる")));
+            events.Add(Event("REL_START_COHABITATION", ObservationEventCategory.Milestone, 3, 3, 1000,
+                Change(null, null, CohabitationState.LivingTogether),
+                History(RelationshipHistoryFlag.CohabitationStarted, RelationshipHistoryFlag.Fed), null,
+                new[] { HistoryHas(RelationshipHistoryFlag.EnteredHome),
+                    new ObservationEventCondition { Type = ObservationConditionType.AcceptanceAtLeast, Acceptance = HumanAcceptanceState.Welcoming },
+                    new ObservationEventCondition { Type = ObservationConditionType.HasHomePreparation, Preparation = HomePreparation.All } },
+                Log(8.0f, ObservationActor.Cat, "CAT_EAT", "寝床で一晩過ごしたスズが、人のいない間に食事を食べる"),
+                Log(8.2f, ObservationActor.Human, "HUMAN_REFILL_WATER", "佐藤が水を替え、今日もスズの食事を用意する")));
             events.Add(Event("REL_SNIFF_HUMAN", ObservationEventCategory.Relationship, 10, 14, 92,
-                Change(null, null, null), History(RelationshipHistoryFlag.SniffedHuman), null,
+                Change(null, null, null, null, CatAdaptationState.Exploring), History(RelationshipHistoryFlag.SniffedHuman), null,
                 new[] { HistoryHas(RelationshipHistoryFlag.EnteredHome), WarinessAtMost(CatWarinessState.Medium) },
+                Log(18.9f, ObservationActor.Cat, "CAT_EXPLORE_ROOM", "スズが寝床から出て部屋を確かめる"),
                 Log(19.0f, ObservationActor.Cat, "CAT_SNIFF_HUMAN", "スズが佐藤の手元に鼻を近づける")));
             events.Add(Event("REL_FIRST_TOUCH", ObservationEventCategory.Relationship, 12, 16, 95,
                 Change(HumanToCatState.Approach, CatWarinessState.Low, null), History(RelationshipHistoryFlag.Touched), null,
@@ -127,30 +141,32 @@ namespace NNN
                 Log(19.3f, ObservationActor.Human, "HUMAN_STOP_TOUCH", "佐藤が手を止める"),
                 Log(19.4f, ObservationActor.Cat, "CAT_REMAIN", "スズがその場に残る")));
             events.Add(Event("REL_PLAY_TOGETHER", ObservationEventCategory.Relationship, 18, 25, 100,
-                Change(null, null, SettlementState.Home), History(RelationshipHistoryFlag.Played), null,
+                Change(null, null, null, null, CatAdaptationState.Settling), History(RelationshipHistoryFlag.Played), null,
                 new[] { HistoryHas(RelationshipHistoryFlag.Touched), MemoryHas(RelationshipMemory.RespectedSignal), WarinessAtMost(CatWarinessState.Low) },
+                Log(19.8f, ObservationActor.Cat, "CAT_USE_HOME", "スズがいつもの食事場所とトイレを使い、寝床で休む"),
                 Log(20.0f, ObservationActor.Human, "HUMAN_MOVE_TOY", "佐藤が紐のおもちゃを床で動かす"),
                 Log(20.1f, ObservationActor.Cat, "CAT_PLAY", "スズが紐を前足で押さえる")));
             // 状態を大きく悪化させない生活上の問題。後続の環境適応イベントが発生する入口になる。
             events.Add(Event("PROBLEM_OBJECT_DROP", ObservationEventCategory.Problem, 22, 29, 65,
                 Change(null, null, null), null, null,
-                new[] { SettlementAtLeast(SettlementState.Territory), WarinessAtMost(CatWarinessState.Low), CatTrait("exploratory") },
+                new[] { CohabitationAtLeast(CohabitationState.Visiting), WarinessAtMost(CatWarinessState.Low), CatTrait("exploratory") },
                 AttentionLog(11.5f, ObservationActor.Cat, "CAT_OBJECT_DROP", "スズがテーブルの小物を前足で床へ落とす")));
             events.Add(Event("REL_HUMAN_ADAPT_ENVIRONMENT", ObservationEventCategory.Relationship, 24, 28, 85,
-                Change(null, null, null), null, Memories(RelationshipMemory.HumanAdaptedEnvironment),
+                Change(null, null, null, HumanAcceptanceState.Committed), null, Memories(RelationshipMemory.HumanAdaptedEnvironment),
                 new[] { EventOccurred("PROBLEM_OBJECT_DROP") },
                 Log(9.0f, ObservationActor.Human, "HUMAN_CLEAR_TABLE", "佐藤がテーブルの小物を箱へ移す")));
             events.Add(Event("REL_SIT_BESIDE", ObservationEventCategory.Relationship, 22, 27, 105,
                 Change(null, CatWarinessState.Relaxed, null), History(RelationshipHistoryFlag.SatBeside), null,
-                new[] { SettlementAtLeast(SettlementState.Home), WarinessAtMost(CatWarinessState.Low), HistoryHas(RelationshipHistoryFlag.Played), MemoryHas(RelationshipMemory.RespectedSignal) },
+                new[] { AdaptationAtLeast(CatAdaptationState.Settling), WarinessAtMost(CatWarinessState.Low), HistoryHas(RelationshipHistoryFlag.Played), MemoryHas(RelationshipMemory.RespectedSignal) },
                 Log(21.1f, ObservationActor.Cat, "CAT_SIT_BESIDE", "スズが佐藤の隣に座る")));
             events.Add(Event("REL_GREETING", ObservationEventCategory.Relationship, 25, 29, 110,
-                Change(HumanToCatState.Care, CatWarinessState.Relaxed, null), History(RelationshipHistoryFlag.Greeted, RelationshipHistoryFlag.FollowedHuman), null,
-                new[] { SettlementAtLeast(SettlementState.Home), WarinessAtMost(CatWarinessState.Low), HistoryHas(RelationshipHistoryFlag.SatBeside) },
+                Change(HumanToCatState.Care, CatWarinessState.Relaxed, null, null, CatAdaptationState.AtEase), History(RelationshipHistoryFlag.Greeted, RelationshipHistoryFlag.FollowedHuman), null,
+                new[] { AdaptationAtLeast(CatAdaptationState.Settling), WarinessAtMost(CatWarinessState.Low), HistoryHas(RelationshipHistoryFlag.SatBeside) },
                 Log(18.0f, ObservationActor.Human, "HUMAN_RETURN_HOME", "佐藤が玄関を開ける"),
-                Log(18.1f, ObservationActor.Cat, "CAT_GREETING", "スズが玄関まで歩いて来る")));
+                Log(18.1f, ObservationActor.Cat, "CAT_GREETING", "スズが玄関まで歩いて来る"),
+                Log(18.3f, ObservationActor.Cat, "CAT_REST", "スズがいつもの場所へ戻ってくつろぐ")));
             events.Add(Event("VISIT_DAY30_ROUTINE", ObservationEventCategory.Milestone, 30, 30, 1000,
-                Change(null, null, null), null, null, null,
+                Change(null, null, null, HumanAcceptanceState.Committed), null, null, null,
                 Log(18.0f, ObservationActor.Human, "HUMAN_RETURN_HOME", "佐藤が帰宅して水皿を確認する"),
                 Log(18.1f, ObservationActor.Cat, "CAT_ROUTINE", "スズが佐藤と同じ部屋へ移動する")));
         }
@@ -200,8 +216,18 @@ namespace NNN
             => id == "PROBLEM_OBJECT_DROP" || id == "REL_HUMAN_ADAPT_ENVIRONMENT";
 
         /// <summary>nullable引数をSetフラグへ変換し、変更なしとenumの先頭値を区別する。</summary>
-        private static RelationshipStateChange Change(HumanToCatState? human, CatWarinessState? cat, SettlementState? settlement)
-            => new RelationshipStateChange { SetHumanToCat = human.HasValue, HumanToCat = human ?? default(HumanToCatState), SetCatWariness = cat.HasValue, CatWariness = cat ?? default(CatWarinessState), SetSettlement = settlement.HasValue, Settlement = settlement ?? default(SettlementState) };
+        private static RelationshipStateChange Change(HumanToCatState? human, CatWarinessState? cat,
+            CohabitationState? cohabitation, HumanAcceptanceState? acceptance = null,
+            CatAdaptationState? adaptation = null, HomePreparation preparation = HomePreparation.None)
+            => new RelationshipStateChange
+            {
+                SetHumanToCat = human.HasValue, HumanToCat = human.GetValueOrDefault(),
+                SetCatWariness = cat.HasValue, CatWariness = cat.GetValueOrDefault(),
+                SetCohabitation = cohabitation.HasValue, Cohabitation = cohabitation.GetValueOrDefault(),
+                SetHumanAcceptance = acceptance.HasValue, HumanAcceptance = acceptance.GetValueOrDefault(),
+                SetCatAdaptation = adaptation.HasValue, CatAdaptation = adaptation.GetValueOrDefault(),
+                AddHomePreparation = preparation
+            };
         private static IEnumerable<RelationshipHistoryFlag> History(params RelationshipHistoryFlag[] values) => values;
         private static IEnumerable<RelationshipMemory> Memories(params RelationshipMemory[] values) => values;
         private static ObservationEventCondition HistoryHas(RelationshipHistoryFlag value) => new ObservationEventCondition { Type = ObservationConditionType.HasHistory, History = value };
@@ -210,8 +236,9 @@ namespace NNN
         private static ObservationEventCondition HumanAtLeast(HumanToCatState value) => new ObservationEventCondition { Type = ObservationConditionType.HumanStateAtLeast, HumanState = value };
         private static ObservationEventCondition WarinessAtLeast(CatWarinessState value) => new ObservationEventCondition { Type = ObservationConditionType.WarinessAtLeast, Wariness = value };
         private static ObservationEventCondition WarinessAtMost(CatWarinessState value) => new ObservationEventCondition { Type = ObservationConditionType.WarinessAtMost, Wariness = value };
-        private static ObservationEventCondition SettlementAtLeast(SettlementState value) => new ObservationEventCondition { Type = ObservationConditionType.SettlementAtLeast, Settlement = value };
-        private static ObservationEventCondition SettlementAtMost(SettlementState value) => new ObservationEventCondition { Type = ObservationConditionType.SettlementAtMost, Settlement = value };
+        private static ObservationEventCondition CohabitationAtLeast(CohabitationState value) => new ObservationEventCondition { Type = ObservationConditionType.CohabitationAtLeast, Cohabitation = value };
+        private static ObservationEventCondition CohabitationAtMost(CohabitationState value) => new ObservationEventCondition { Type = ObservationConditionType.CohabitationAtMost, Cohabitation = value };
+        private static ObservationEventCondition AdaptationAtLeast(CatAdaptationState value) => new ObservationEventCondition { Type = ObservationConditionType.AdaptationAtLeast, Adaptation = value };
         private static ObservationEventCondition CatTrait(string id) => new ObservationEventCondition { Type = ObservationConditionType.CatTrait, StringValue = id };
         private static ObservationEventCondition EventOccurred(string id) => new ObservationEventCondition { Type = ObservationConditionType.EventOccurred, StringValue = id };
         private static ObservationLogTemplate Log(float time, ObservationActor actor, string action, string text) => new ObservationLogTemplate { Time = time, Actor = actor, ActionId = action, Text = text, Importance = ObservationLogImportance.Normal };

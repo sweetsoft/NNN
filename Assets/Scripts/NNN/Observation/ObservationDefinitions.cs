@@ -10,10 +10,24 @@ namespace NNN
     public enum HumanToCatState { Avoid, Watch, Approach, Care }
     /// <summary>猫が許容できる対人距離の段階。宣言順はHighからRelaxedへ警戒が下がる。</summary>
     public enum CatWarinessState { High, Medium, Low, Relaxed }
-    /// <summary>猫が対象住居を一時訪問先から生活拠点へ変えていく段階。</summary>
-    public enum SettlementState { Unknown, Visiting, Territory, Home }
+    /// <summary>生活拠点としての同居事実。外出や対人警戒では後退しない。</summary>
+    public enum CohabitationState { Outside, Visiting, LivingTogether }
+    /// <summary>人間が猫との生活と継続的な世話を受け入れる姿勢。</summary>
+    public enum HumanAcceptanceState { Reluctant, Tolerating, Welcoming, Committed }
+    /// <summary>家と生活リズムへの適応。対人警戒とは独立する。</summary>
+    public enum CatAdaptationState { Unfamiliar, Exploring, Settling, AtEase }
+    /// <summary>準備項目から導出する表示段階。</summary>
+    public enum HomeReadinessStage { Unprepared, Preparing, BasicReady }
+    /// <summary>工作の効果やイベント条件でも個別に照合する最低限の住居準備。</summary>
+    [Flags]
+    public enum HomePreparation
+    {
+        None = 0, FoodAndWaterReady = 1, ToiletReady = 2,
+        RestingPlaceReady = 4, BasicSafetyReady = 8,
+        All = FoodAndWaterReady | ToiletReady | RestingPlaceReady | BasicSafetyReady
+    }
     /// <summary>一度起きた観測事実。後続イベントの前提条件として消去せず保持する。</summary>
-    public enum RelationshipHistoryFlag { Seen, Approached, Watered, Fed, EnteredHome, SniffedHuman, Touched, Played, SatBeside, Greeted, FollowedHuman }
+    public enum RelationshipHistoryFlag { Seen, Approached, Watered, Fed, EnteredHome, SniffedHuman, Touched, Played, SatBeside, Greeted, FollowedHuman, CohabitationStarted }
     /// <summary>単なる発生履歴ではなく、後の行動選択に意味を持つ経験・学習結果。</summary>
     public enum RelationshipMemory { HumanWaited, SafeEntry, OverTouched, RespectedSignal, HumanAdaptedEnvironment }
     /// <summary>通常描写と、一日最大一件のMajor Eventを分類する。</summary>
@@ -31,24 +45,39 @@ namespace NNN
     public enum ObservationConditionType
     {
         HumanStateAtLeast, HumanStateAtMost, WarinessAtLeast, WarinessAtMost,
-        SettlementAtLeast, SettlementAtMost, HasHistory, MissingHistory,
+        // 旧Settlement条件のシリアライズ値4・5は再利用しない。
+        HasHistory = 6, MissingHistory,
         HasMemory, MissingMemory, EventOccurred, EventNotOccurred,
-        DaysSinceLastMajorAtLeast, CatTrait, HumanTrait
+        DaysSinceLastMajorAtLeast, CatTrait, HumanTrait,
+        CohabitationAtLeast, CohabitationAtMost, AcceptanceAtLeast, AcceptanceAtMost,
+        AdaptationAtLeast, AdaptationAtMost, HasHomePreparation, MissingHomePreparation
     }
 
     [Serializable]
     /// <summary>
-    /// その時点の関係を三つの離散状態で表す。数値的な親密度・成功率としてUI表示する用途ではない。
+    /// 同居・受容・住居準備・適応・対人警戒を独立して保持する。HumanToCatは行動選択専用。
     /// 日次結果ではCloneを保存し、イベント適用前後を同じ参照にしない。
     /// </summary>
     public sealed class RelationshipState
     {
         public HumanToCatState HumanToCat;
         public CatWarinessState CatWariness;
-        public SettlementState Settlement;
+        public CohabitationState Cohabitation;
+        public HumanAcceptanceState HumanAcceptance;
+        public HomePreparation HomeReadiness;
+        public CatAdaptationState CatAdaptation;
+        public bool HasPreparation(HomePreparation items) => (HomeReadiness & items) == items;
+        public HomeReadinessStage ReadinessStage => HasPreparation(HomePreparation.All)
+            ? HomeReadinessStage.BasicReady
+            : HomeReadiness == HomePreparation.None ? HomeReadinessStage.Unprepared : HomeReadinessStage.Preparing;
+        /// <summary>条件成立だけで同居へ遷移しない。開始イベントが別途必要。</summary>
+        public bool CanStartCohabitation => Cohabitation == CohabitationState.Visiting
+            && HumanAcceptance >= HumanAcceptanceState.Welcoming && HasPreparation(HomePreparation.All);
         /// <summary>DaySimulationResultに変更前後の独立したスナップショットを残す。</summary>
-        public RelationshipState Clone() => new RelationshipState { HumanToCat = HumanToCat, CatWariness = CatWariness, Settlement = Settlement };
-        public override string ToString() => HumanToCat + " / " + CatWariness + " / " + Settlement;
+        public RelationshipState Clone() => (RelationshipState)MemberwiseClone();
+        public override string ToString() => "Cohabitation=" + Cohabitation + " / Acceptance=" + HumanAcceptance
+            + " / Home=" + ReadinessStage + " (" + HomeReadiness + ") / Adaptation=" + CatAdaptation
+            + " / Wariness=" + CatWariness + " / HumanAction=" + HumanToCat;
     }
 
     [Serializable]
@@ -62,14 +91,30 @@ namespace NNN
         public HumanToCatState HumanToCat;
         public bool SetCatWariness;
         public CatWarinessState CatWariness;
-        public bool SetSettlement;
-        public SettlementState Settlement;
+        public bool SetCohabitation;
+        public CohabitationState Cohabitation;
+        public bool SetHumanAcceptance;
+        public HumanAcceptanceState HumanAcceptance;
+        public bool SetCatAdaptation;
+        public CatAdaptationState CatAdaptation;
+        public HomePreparation AddHomePreparation;
+        public HomePreparation RemoveHomePreparation;
         /// <summary>指定された軸だけを実行中の関係状態へ反映する。</summary>
         public void Apply(RelationshipState state)
         {
+            if (state == null) throw new ArgumentNullException(nameof(state));
+            if ((AddHomePreparation & RemoveHomePreparation) != HomePreparation.None)
+                throw new InvalidOperationException("The same preparation cannot be added and removed together.");
+            // 遷移前の条件を検証し、失敗時は他の状態軸も変更しない。
+            if (SetCohabitation && Cohabitation == CohabitationState.LivingTogether
+                && state.Cohabitation != CohabitationState.LivingTogether && !state.CanStartCohabitation)
+                throw new InvalidOperationException("Cohabitation requires a visit, acceptance and basic preparation before the event.");
             if (SetHumanToCat) state.HumanToCat = HumanToCat;
             if (SetCatWariness) state.CatWariness = CatWariness;
-            if (SetSettlement) state.Settlement = Settlement;
+            if (SetCohabitation) state.Cohabitation = Cohabitation;
+            if (SetHumanAcceptance) state.HumanAcceptance = HumanAcceptance;
+            if (SetCatAdaptation) state.CatAdaptation = CatAdaptation;
+            state.HomeReadiness = (state.HomeReadiness | AddHomePreparation) & ~RemoveHomePreparation;
         }
     }
 
@@ -87,7 +132,10 @@ namespace NNN
         public RelationshipMemory Memory;
         public HumanToCatState HumanState;
         public CatWarinessState Wariness;
-        public SettlementState Settlement;
+        public CohabitationState Cohabitation;
+        public HumanAcceptanceState Acceptance;
+        public CatAdaptationState Adaptation;
+        public HomePreparation Preparation;
     }
 
     [Serializable]

@@ -30,7 +30,7 @@ namespace NNN.Editor
         // 現行Vertical Sliceで全Seed到達を期待するイベント。未到達は警告ではなく進行不能として扱う。
         private static readonly string[] RequiredEventIds =
         {
-            "VISIT_FIRST_CONTACT", "REL_ENTER_HOME", "REL_SNIFF_HUMAN", "REL_FIRST_TOUCH",
+            "VISIT_FIRST_CONTACT", "REL_ENTER_HOME", "REL_START_COHABITATION", "REL_SNIFF_HUMAN", "REL_FIRST_TOUCH",
             "PROBLEM_OVERTOUCH_CAT_PUNCH", "REL_RESPECT_SIGNAL", "REL_PLAY_TOGETHER",
             "REL_SIT_BESIDE", "REL_GREETING", "VISIT_DAY30_ROUTINE"
         };
@@ -57,10 +57,12 @@ namespace NNN.Editor
         [MenuItem("NNN/Observation/Verify Multiple Seeds")]
         public static void VerifyMultipleSeeds()
         {
+            CohabitationStateVerification.Verify();
             ValidateStableEqualTimeOrdering();
             foreach (int seed in VerificationSeeds)
             {
                 var first = Run(seed);
+                CohabitationStateVerification.VerifyRoute(first.Results);
                 var repeat = Run(seed);
                 Debug.Log(Summary(seed, first.Results, first.State));
                 Validate(seed, first.Results, first.State, repeat.Results);
@@ -115,6 +117,7 @@ namespace NNN.Editor
         /// </summary>
         private static StressTestReport ExecuteStressTest(int seedCount)
         {
+            CohabitationStateVerification.Verify();
             if (seedCount < 1) throw new ArgumentOutOfRangeException(nameof(seedCount));
             ValidateStableEqualTimeOrdering();
             ValidateIncrementalApi();
@@ -126,6 +129,7 @@ namespace NNN.Editor
                 try
                 {
                     var run = Run(seed);
+                    CohabitationStateVerification.VerifyRoute(run.Results);
                     ValidateStressSeed(seed, run.Results, run.State, aggregate);
                 }
                 catch (Exception exception)
@@ -279,7 +283,9 @@ namespace NNN.Editor
 
             int maxMajorStreak = MaxConsecutive(results.Select(day => !string.IsNullOrEmpty(day.MajorEventId)));
             int maxNoMajorStreak = MaxConsecutive(results.Select(day => string.IsNullOrEmpty(day.MajorEventId)));
-            if (maxMajorStreak >= 2) warnings.Add("Major Eventが" + maxMajorStreak + "日連続");
+            // DAY1〜3の導入Milestoneは連続を仕様とする。通常期間の密度警告は残す。
+            int postIntroStreak = MaxConsecutive(results.Where(day => day.Day > 3).Select(day => !string.IsNullOrEmpty(day.MajorEventId)));
+            if (postIntroStreak >= 2) warnings.Add("導入後のMajor Eventが" + postIntroStreak + "日連続");
             if (maxNoMajorStreak >= 10) failures.Add("Major Eventなしが" + maxNoMajorStreak + "日連続");
             if (days.TryGetValue("REL_PLAY_TOGETHER", out int playDay) && playDay <= 10) failures.Add("後半イベントをDAY10以前に消化");
 

@@ -13,7 +13,7 @@ namespace NNN
         public int CurrentDay { get; internal set; }
         // DAY1のMilestoneを通常の間隔計算から妨げないよう、開始前は十分小さい日として扱う。
         public int LastMajorEventDay { get; internal set; } = -99;
-        public RelationshipState Relationship { get; } = new RelationshipState { HumanToCat = HumanToCatState.Avoid, CatWariness = CatWarinessState.High, Settlement = SettlementState.Unknown };
+        public RelationshipState Relationship { get; } = new RelationshipState { HumanToCat = HumanToCatState.Avoid, CatWariness = CatWarinessState.High };
         public HashSet<RelationshipHistoryFlag> HistoryFlags { get; } = new HashSet<RelationshipHistoryFlag>();
         public HashSet<RelationshipMemory> MemoryFlags { get; } = new HashSet<RelationshipMemory>();
         public HashSet<string> OccurredEventIds { get; } = new HashSet<string>();
@@ -33,6 +33,10 @@ namespace NNN
         {
             if (definition == null || state.CurrentDay < definition.EarliestDay || state.CurrentDay > definition.LatestDay) return false;
             if (!definition.Repeatable && state.OccurredEventIds.Contains(definition.Id)) return false;
+            if (definition.StateChange.SetCohabitation
+                && definition.StateChange.Cohabitation == CohabitationState.LivingTogether
+                && state.Relationship.Cohabitation != CohabitationState.LivingTogether
+                && !state.Relationship.CanStartCohabitation) return false;
             // Conditionsが空なら期間と単発性だけで候補化する。複数条件はすべて満たす必要がある。
             return definition.Conditions.All(condition => Evaluate(condition, route, state));
         }
@@ -47,8 +51,14 @@ namespace NNN
                 // 企画上の「警戒がMedium以下」はMedium/Low/Relaxedなので、数値比較の向きが他の状態軸と逆になる。
                 case ObservationConditionType.WarinessAtLeast: return s.Relationship.CatWariness <= c.Wariness;
                 case ObservationConditionType.WarinessAtMost: return s.Relationship.CatWariness >= c.Wariness;
-                case ObservationConditionType.SettlementAtLeast: return s.Relationship.Settlement >= c.Settlement;
-                case ObservationConditionType.SettlementAtMost: return s.Relationship.Settlement <= c.Settlement;
+                case ObservationConditionType.CohabitationAtLeast: return s.Relationship.Cohabitation >= c.Cohabitation;
+                case ObservationConditionType.CohabitationAtMost: return s.Relationship.Cohabitation <= c.Cohabitation;
+                case ObservationConditionType.AcceptanceAtLeast: return s.Relationship.HumanAcceptance >= c.Acceptance;
+                case ObservationConditionType.AcceptanceAtMost: return s.Relationship.HumanAcceptance <= c.Acceptance;
+                case ObservationConditionType.AdaptationAtLeast: return s.Relationship.CatAdaptation >= c.Adaptation;
+                case ObservationConditionType.AdaptationAtMost: return s.Relationship.CatAdaptation <= c.Adaptation;
+                case ObservationConditionType.HasHomePreparation: return s.Relationship.HasPreparation(c.Preparation);
+                case ObservationConditionType.MissingHomePreparation: return !s.Relationship.HasPreparation(c.Preparation);
                 case ObservationConditionType.HasHistory: return s.HistoryFlags.Contains(c.History);
                 case ObservationConditionType.MissingHistory: return !s.HistoryFlags.Contains(c.History);
                 case ObservationConditionType.HasMemory: return s.MemoryFlags.Contains(c.Memory);
@@ -82,7 +92,7 @@ namespace NNN
         public ObservationEventDefinition SelectMajorEvent(int day, IList<ObservationEventDefinition> candidates,
             ObservationSimulationState state, IList<ObservationSimulationModifier> modifiers)
         {
-            // DAY1/DAY30は通常のクールダウンや確率に左右されない観察期間の境界イベント。
+            // 導入と期間末のMilestoneは通常のクールダウンや確率に左右されない。
             var milestone = candidates.Where(x => x.Category == ObservationEventCategory.Milestone).OrderByDescending(x => x.BasePriority).FirstOrDefault();
             if (milestone != null) return milestone;
             if (candidates.Count == 0) return null;
@@ -365,11 +375,12 @@ namespace NNN
             }
             else
             {
+                // 遷移の検証を履歴追加より先に行い、不正な同居イベントを記録しない。
+                definition.StateChange.Apply(State.Relationship);
                 State.LastMajorEventDay = State.CurrentDay;
                 State.OccurredEventIds.Add(definition.Id);
                 foreach (var flag in definition.AddHistoryFlags) State.HistoryFlags.Add(flag);
                 foreach (var memory in definition.AddMemories) State.MemoryFlags.Add(memory);
-                definition.StateChange.Apply(State.Relationship);
             }
             // 定義を直接UIへ渡さず実行結果へ複製し、表示とシミュレーションの依存を分離する。
             foreach (var log in definition.Logs)
