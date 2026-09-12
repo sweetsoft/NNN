@@ -29,6 +29,7 @@ namespace NNN
     {
         public string Id, CurrentQuestion;
         public int Priority;
+        public int UpdateLimit = 3;
         public InsightCondition Condition = new InsightCondition();
         public List<InsightEntry> Updates = new List<InsightEntry>();
         public List<InsightEntry> Changes = new List<InsightEntry>();
@@ -109,6 +110,8 @@ namespace NNN
                     .Select(x => new InsightEntry { Id = "LOG/" + x.EventId, Text = x.Text,
                         Condition = new InsightCondition { TodayEvents = new[] { x.EventId } } }).ToList();
             previousUpdates = new HashSet<string>(result.Updates.Select(x => x.Id)); previous = now;
+            // 表示密度だけを調整し、翌日の既存の重複判定には波及させない。
+            result.Updates = result.Updates.Take(matched.FirstOrDefault()?.UpdateLimit ?? 3).ToList();
             return result;
         }
     }

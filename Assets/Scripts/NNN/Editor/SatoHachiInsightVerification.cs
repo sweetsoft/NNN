@@ -24,6 +24,14 @@ namespace NNN.Editor
                 var route = H.CreateRoute(); var sim = new ObservationSimulator(route, seed);
                 var baseline = new ObservationSimulator(H.CreateRoute(), seed);
                 var presenter = new ObservationInsightPresenter(SatoHachiInsightFactory.Create());
+                var legacyDefinitions = SatoHachiInsightFactory.Create();
+                legacyDefinitions.RemoveAll(x => x.Id == "HARNESS_ROUTE_QUESTION");
+                foreach (var definition in legacyDefinitions) definition.UpdateLimit = 3;
+                legacyDefinitions.Single(x => x.Id == "KNOWN_ROUTE").Updates[0].Text = "商店街は徒歩圏だが、大通りと猫だけが通れる細道がある";
+                legacyDefinitions.Single(x => x.Id == "TRIP_READY").Updates[0].Text = "商店街再訪に使う道具と経路情報が揃っている";
+                var legacyPresenter = new ObservationInsightPresenter(legacyDefinitions);
+                string routeResult = route.Actions.Single(x => x.Id == H.InvestigateRoute).ResultText;
+                Check(routeResult.Contains("600m") && routeResult.Contains("大通り") && routeResult.Contains("細道"), "Investigation details lost");
                 var random = new System.Random(seed);
                 Check(route.Actions.Concat(NNNActionCatalog.All).Where(x => x.Kind != NNNActionKind.Skip).All(x => !string.IsNullOrWhiteSpace(x.IntentText)), "Intent coverage");
                 for (int day = 1; day <= 11; day++)
@@ -31,6 +39,12 @@ namespace NNN.Editor
                     sim.BeginDay(day); sim.CompleteObservation(); baseline.BeginDay(day); baseline.CompleteObservation();
                     string before = Signature(sim);
                     var review = presenter.Build(sim, sim.GetObservationScenes());
+                    var legacyReview = legacyPresenter.Build(sim, sim.GetObservationScenes());
+                    if ((day >= 3 && day <= 8) || sim.DayContext.ExecutedEventIds.Contains(H.ShortTripObservation))
+                        Check(review.Updates.Select(x => x.Text).SequenceEqual(legacyReview.Updates.Select(x => x.Text))
+                            && review.CurrentQuestion == legacyReview.CurrentQuestion, "Protected day changed: seed=" + seed + " policy=" + policy + " day=" + day + " actual=" + review.CurrentQuestion + " previous=" + legacyReview.CurrentQuestion);
+                    Check(review.Changes.Select(x => x.Text).SequenceEqual(legacyReview.Changes.Select(x => x.Text)), "CHANGE changed");
+                    if (day == 1 || day == 2) Check(review.Updates.Count == 2, "Opening update count");
                     Check(Signature(sim) == before, "Review mutated simulation");
                     Check(review.Updates.Count >= 1 && review.Updates.Count <= 3 && review.Changes.Count <= 2 && !string.IsNullOrWhiteSpace(review.CurrentQuestion), "Review bounds");
                     foreach (var entry in review.Updates.Concat(review.Changes))
@@ -46,8 +60,13 @@ namespace NNN.Editor
                     if (!sim.State.WorldFlags.Contains(H.Tower))
                         Check(!review.Changes.Any(x => x.Text.Contains("高い場所") || x.Text.Contains("探索場所")), "Premature tower change");
                     if (policy == 0 && day == 6) Check(review.Changes.Any(x => x.Condition.Comparison == InsightComparison.AfterOperation), "Tower operation comparison missing");
-                    if (policy == 0 && day == 9) Check(!allText.Contains("大通り"), "Same-day research leaked into review");
-                    if (policy == 0 && day == 10) Check(allText.Contains("大通り"), "Known route omitted");
+                    if (policy == 0 && day == 9)
+                        Check(review.CurrentQuestion == "この状態で、安全に商店街まで行ける？"
+                            && !allText.Contains("大通り") && !allText.Contains("細道") && !allText.Contains("600m"), "DAY9 question/spoiler");
+                    if (review.CurrentQuestion == "この状態で、安全に商店街まで行ける？")
+                        Check(sim.State.PlayerKnowledgeFlags.Contains(H.FamiliarStreets), "Unknown destination");
+                    if (policy == 0 && day == 10)
+                        Check(review.Updates.Select(x => x.Text).SequenceEqual(new[] { "安全な外出に必要な道具が揃った", "商店街までの経路上の問題も分かっている" }), "DAY10 compression");
                     if (seed == 42 && policy == 0)
                         report.AppendLine("| " + day + " | " + string.Join("<br>", review.Updates.Select(x => x.Text)) + " | "
                             + string.Join("<br>", review.Changes.Select(x => x.Text)) + " | " + review.CurrentQuestion + " |");
@@ -57,6 +76,7 @@ namespace NNN.Editor
                     string action = policy == 0 ? Plan[day - 1] : policy == 1 ? "SKIP"
                         : options.Where(x => x.IsAvailable).OrderBy(x => random.Next()).First().Definition.Id;
                     if (route.Actions.Single(x => x.Id == action).Kind == NNNActionKind.Operation) presenter.RecordOperation(action, sim);
+                    if (route.Actions.Single(x => x.Id == action).Kind == NNNActionKind.Operation) legacyPresenter.RecordOperation(action, sim);
                     sim.ApplyNNNAction(action); baseline.ApplyNNNAction(action);
                     Check(Signature(sim) == Signature(baseline), "Simulation invariance");
                     var actual = sim.EndDay(); var expected = baseline.EndDay();

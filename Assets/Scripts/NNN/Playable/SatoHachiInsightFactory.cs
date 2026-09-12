@@ -12,9 +12,11 @@ namespace NNN
             var d = Event(result, FirstContact, 100, "この人のそばに、ハチはどこまで近づける？",
                 "ハチは自分から佐藤へ近づいた", "佐藤がしゃがんでも、その場を離れなかった");
             Change(d, "NEW 佐藤との接触が始まった");
+            d.UpdateLimit = 2;
             d = Event(result, EnterHome, 110, "ハチはこの家を生活場所として使える？",
                 "ハチが佐藤宅へ入った", "佐藤は食事・水・トイレ・寝床を準備した");
             Change(d, "NEW 室内へ入った", InsightComparison.CohabitationChanged);
+            d.UpdateLimit = 2;
             d = Event(result, Cohabitation, 120, "一緒に暮らし始めたあと、どんな問題が出る？",
                 "佐藤は翌朝の世話を準備した", "ハチが家の寝床で丸くなった");
             Change(d, "↑ 滞在から同居へ進んだ", InsightComparison.CohabitationChanged);
@@ -39,6 +41,9 @@ namespace NNN
             d = Event(result, HarnessSteps, 600, "ハーネスでの歩き方は、これからどう変わる？",
                 "ハチは数歩進み、佐藤が待つとさらに一歩進んだ");
             Change(d, "↑ 装着中に歩く様子が変わった", InsightComparison.PreviousEvent, FirstHarness);
+            result.Add(new ObservationInsightDefinition { Id = "HARNESS_ROUTE_QUESTION", Priority = 601,
+                CurrentQuestion = "この状態で、安全に商店街まで行ける？",
+                Condition = new InsightCondition { TodayEvents = new[] { HarnessSteps }, Knowledge = new[] { FamiliarStreets } } });
             d = Event(result, ShortTripObservation, 1000, "商店街へ行けても、同じように過ごせないならどうする？",
                 "キャリーとハーネスで商店街へ行けた", "ハチは店の間の細道へ向かった", "佐藤はその先へ付いていけなかった");
             Change(d, "NEW 商店街への再訪は成立した");
@@ -67,15 +72,15 @@ namespace NNN
             var routeKnown = new InsightCondition { Knowledge = new[] { Walkable, BusyRoad, CatOnlyPaths } };
             d = new ObservationInsightDefinition { Id = "KNOWN_ROUTE", Priority = 650, Condition = routeKnown,
                 CurrentQuestion = "安全に商店街まで行く方法は作れる？" };
-            d.Updates.Add(new InsightEntry { Id = "ROUTE_FACT", Text = "商店街は徒歩圏だが、大通りと猫だけが通れる細道がある", Condition = routeKnown });
+            d.Updates.Add(new InsightEntry { Id = "ROUTE_FACT", Text = "商店街までの経路上の問題も分かっている", Condition = routeKnown });
             d.Changes.Add(new InsightEntry { Id = "ROUTE_NEW", Text = "NEW 商店街までの移動条件が分かった",
                 Condition = new InsightCondition { Knowledge = new[] { Walkable, BusyRoad, CatOnlyPaths }, Comparison = InsightComparison.NewKnowledge, CompareId = BusyRoad } });
             result.Add(d);
             var ready = new InsightCondition { Knowledge = new[] { Walkable, BusyRoad, CatOnlyPaths, HarnessUncertain, WantsOutside },
                 WorldFlags = new[] { Harness, Carrier } };
-            d = new ObservationInsightDefinition { Id = "TRIP_READY", Priority = 660, Condition = ready,
+            d = new ObservationInsightDefinition { Id = "TRIP_READY", Priority = 660, Condition = ready, UpdateLimit = 2,
                 CurrentQuestion = "安全な移動方法なら、商店街再訪は成立する？" };
-            d.Updates.Add(new InsightEntry { Id = "TRIP_READY_FACT", Text = "商店街再訪に使う道具と経路情報が揃っている", Condition = ready });
+            d.Updates.Add(new InsightEntry { Id = "TRIP_READY_FACT", Text = "安全な外出に必要な道具が揃った", Condition = ready });
             result.Add(d);
             return result;
         }
