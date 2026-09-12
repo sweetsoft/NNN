@@ -1,0 +1,187 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 142f9eab433a4ab8808cc582c9ed5404, type: 3}
+  m_Name: SatoHachiPresentation
+  m_EditorClassIdentifier: Assembly-CSharp::NNN.ObservationPresentationDefinition
+  Actions:
+  - ActionId: CAT_WALK
+    Motion: 1
+  - ActionId: CAT_APPROACH
+    Motion: 1
+  - ActionId: CAT_LOOK
+    Motion: 2
+  - ActionId: CAT_GROOM
+    Motion: 11
+  - ActionId: CAT_REST
+    Motion: 3
+  - ActionId: CAT_EAT
+    Motion: 12
+  - ActionId: CAT_MEOW
+    Motion: 8
+  - ActionId: CAT_PAW
+    Motion: 9
+  - ActionId: CAT_JUMP
+    Motion: 10
+  - ActionId: HARNESS_FREEZE
+    Motion: 0
+  - ActionId: HARNESS_LOW_WALK
+    Motion: 1
+  - ActionId: HUMAN_LOOK
+    Motion: 2
+  - ActionId: HUMAN_CROUCH
+    Motion: 4
+  - ActionId: HUMAN_PLACE
+    Motion: 6
+  - ActionId: HUMAN_DOOR
+    Motion: 6
+  - ActionId: HUMAN_HOLD
+    Motion: 7
+  - ActionId: HUMAN_PHONE
+    Motion: 5
+  - ActionId: HUMAN_STOP
+    Motion: 0
+  Stages:
+  - EventId: VISIT_FIRST_CONTACT
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Default
+    CatDestination: Cat_NearHumanDoor
+  - EventId: REL_ENTER_HOME
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Door
+    CatDestination: Cat_Default
+  - EventId: REL_START_COHABITATION
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Bed
+    CatDestination: 
+  - EventId: REL_OUTSIDE_REQUEST
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Door
+    CatDestination: 
+  - EventId: NORMAL_OUTSIDE_REQUEST
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Door
+    CatDestination: 
+  - EventId: REL_USE_TOWER_AND_RETURN_TO_DOOR
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_Tower
+  - EventId: NORMAL_USE_TOWER
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_Tower
+  - EventId: NORMAL_VERTICAL_PATROL
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Tower
+    CatDestination: Cat_Window
+  - EventId: NORMAL_LOOK_WINDOW
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Window
+    CatDestination: 
+  - EventId: NORMAL_HOME_REST
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Bed
+    CatDestination: 
+  - EventId: REL_SEARCH_SAFE_OUTDOOR_METHOD
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Table
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: REL_FIRST_HARNESS
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_Bed
+  - EventId: REL_HARNESS_FEW_STEPS
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_Window
+  - EventId: REL_SHOPPING_STREET_SHORT_TRIP
+    SceneId: DEPARTURE
+    BackgroundId: HOME
+    HumanMarker: Human_Table
+    CatMarker: Cat_Default
+    CatDestination: Cat_Carrier
+  - EventId: REL_SHOPPING_STREET_SHORT_TRIP
+    SceneId: ARRIVAL
+    BackgroundId: SHOPPING_STREET
+    HumanMarker: Human_Default
+    CatMarker: Cat_Carrier
+    CatDestination: Cat_Default
+  - EventId: REL_SHOPPING_STREET_SHORT_TRIP
+    SceneId: MISMATCH
+    BackgroundId: SHOPPING_STREET
+    HumanMarker: Human_Alley
+    CatMarker: Cat_Default
+    CatDestination: Cat_Alley
+  - EventId: REL_SHOPPING_STREET_SHORT_TRIP
+    SceneId: RETURN
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Bed
+    CatDestination: 
+  Information:
+  - Id: KNOW_CAT_WANTS_OUTSIDE
+    Label: "\u4F11\u3093\u3067\u3082\u5916\u3078\u884C\u304D\u305F\u304C\u308B"
+  - Id: KNOW_INDOOR_VERTICAL_OPPORTUNITY
+    Label: "\u5BA4\u5185\u306E\u9AD8\u4F4E\u5DEE\u304C\u5C11\u306A\u3044"
+  - Id: KNOW_CAT_FAMILIAR_SHOPPING_STREETS
+    Label: "\u5546\u5E97\u8857\u306B\u6163\u308C\u305F\u9053\u304C\u3042\u308B"
+  - Id: KNOW_HARNESS_ADAPTATION_UNCERTAIN
+    Label: "\u30CF\u30FC\u30CD\u30B9\u3078\u306E\u9069\u5FDC\u306F\u307E\u3060\u4E0D\u660E"
+  - Id: KNOW_ROUTE_WALKABLE
+    Label: "\u5546\u5E97\u8857\u306F\u7D04600m\u306E\u5F92\u6B69\u570F"
+  - Id: KNOW_ROUTE_HAS_BUSY_ROAD
+    Label: "\u7D4C\u8DEF\u306B\u5927\u901A\u308A\u304C\u3042\u308B"
+  - Id: KNOW_SHOPPING_STREET_HAS_CAT_ONLY_PATHS
+    Label: "\u732B\u3060\u3051\u304C\u901A\u308C\u308B\u7D30\u9053\u304C\u3042\u308B"
+  - Id: KNOW_SHORT_TRIP_PARTIALLY_WORKS
+    Label: "\u30AD\u30E3\u30EA\u30FC\u3068\u73FE\u5730\u30CF\u30FC\u30CD\u30B9\u3067\u518D\u8A2A\u3067\u304D\u308B"
+  - Id: KNOW_SHOPPING_STREET_ROUTE_MISMATCH
+    Label: "\u4EBA\u9593\u304C\u4ED8\u3044\u3066\u3044\u3051\u306A\u3044\u7D4C\u8DEF\u304C\u3042\u308B"
+  GuidedActions:
+  - SKIP
+  - SKIP
+  - SKIP
+  - INVESTIGATE_INDOOR_ACTIVITY
+  - OP_INSTALL_INDOOR_VERTICAL_ROUTE
+  - INVESTIGATE_FORMER_LIVING_AREA
+  - OP_PREPARE_SAFE_OUTDOOR_GEAR
+  - INVESTIGATE_HARNESS_RESPONSE
+  - INVESTIGATE_SHOPPING_STREET_ROUTE
+  - OP_SHOPPING_STREET_SHORT_TRIP
+  - SKIP
+  HumanName: "\u4F50\u85E4"
+  CatName: "\u30CF\u30C1"

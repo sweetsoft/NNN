@@ -93,6 +93,8 @@ namespace NNN
         public string Id { get; }
         public string DisplayName { get; }
         public string Description { get; }
+        /// <summary>表示専用。原因の確認や条件変更の意図であり、結果の保証ではない。</summary>
+        public string IntentText { get; }
         public NNNActionKind Kind { get; }
         public ReadOnlyCollection<string> RequiredKnowledgeTags { get; }
         public ReadOnlyCollection<string> DiscoveryKnowledgeTags { get; }
@@ -104,10 +106,12 @@ namespace NNN
         public NNNActionDefinition(string id, string name, string description, NNNActionKind kind,
             IEnumerable<string> requiredKnowledgeTags = null, IEnumerable<string> discoveryKnowledgeTags = null,
             IEnumerable<string> addedKnowledgeTags = null, string resultText = null, OperationEffect effect = null,
-            IEnumerable<ObservationEventCondition> conditions = null, IEnumerable<ObservationEventCondition> discoveryConditions = null)
+            IEnumerable<ObservationEventCondition> conditions = null, IEnumerable<ObservationEventCondition> discoveryConditions = null,
+            string intentText = null)
         {
             if (kind == NNNActionKind.Operation && effect == null) throw new ArgumentNullException(nameof(effect));
             Id = id; DisplayName = name; Description = description; Kind = kind;
+            IntentText = kind == NNNActionKind.Skip ? "" : intentText ?? description;
             RequiredKnowledgeTags = OperationEffect.Copy(requiredKnowledgeTags);
             DiscoveryKnowledgeTags = OperationEffect.Copy(discoveryKnowledgeTags);
             AddedKnowledgeTags = OperationEffect.Copy(addedKnowledgeTags);
@@ -138,18 +142,21 @@ namespace NNN
         public const string Skip = "SKIP";
         public static ReadOnlyCollection<NNNActionDefinition> All { get; } = new List<NNNActionDefinition>
         {
-            Research(InvestigateCat, "猫の距離感を調べる", KnowledgeTag.CatBoundarySignal, "接触が長くなると、尾や耳の動きが変わる。"),
-            Research(InvestigateHuman, "人間の生活リズムを調べる", KnowledgeTag.HumanPlayOpportunity, "夕食のあとに短い空き時間がある。"),
-            Research(InvestigateHome, "部屋の配置を調べる", KnowledgeTag.HomeObjectRisk, "猫の通り道の近くに、落としやすい小物がある。"),
+            Research(InvestigateCat, "猫の距離感を調べる", KnowledgeTag.CatBoundarySignal, "接触が長くなると、尾や耳の動きが変わる。", "接触の仕方と猫の反応に関係があるか"),
+            Research(InvestigateHuman, "人間の生活リズムを調べる", KnowledgeTag.HumanPlayOpportunity, "夕食のあとに短い空き時間がある。", "猫と過ごせる時間がいつあるか"),
+            Research(InvestigateHome, "部屋の配置を調べる", KnowledgeTag.HomeObjectRisk, "猫の通り道の近くに、落としやすい小物がある。", "部屋の配置が猫の行動に関係しているか"),
             Operation(HintSignal, "猫のサインを伝える", new[] { KnowledgeTag.CatBoundarySignal }, KnowledgeTag.CatBoundarySignal, WorldFlag.HumanKnowsCatBoundarySignal),
             Operation(ArrangePlay, "遊ぶきっかけを作る", new[] { KnowledgeTag.HumanPlayOpportunity, KnowledgeTag.CatBoundarySignal }, KnowledgeTag.HumanPlayOpportunity, WorldFlag.PlayOpportunityPrepared),
             Operation(HintHome, "片づけのヒントを届ける", new[] { KnowledgeTag.HomeObjectRisk }, KnowledgeTag.HomeObjectRisk, WorldFlag.HumanKnowsHomeObjectRisk),
             new NNNActionDefinition(Skip, "SKIP", "今日は様子を見る。", NNNActionKind.Skip)
         }.AsReadOnly();
-        private static NNNActionDefinition Research(string id, string name, string tag, string result)
-            => new NNNActionDefinition(id, name, name, NNNActionKind.Investigation, addedKnowledgeTags: new[] { tag }, resultText: result);
+        private static NNNActionDefinition Research(string id, string name, string tag, string result, string intent)
+            => new NNNActionDefinition(id, name, name, NNNActionKind.Investigation, addedKnowledgeTags: new[] { tag }, resultText: result, intentText: intent);
         private static NNNActionDefinition Operation(string id, string name, string[] required, string discovery, string flag)
-            => new NNNActionDefinition(id, name, name, NNNActionKind.Operation, required, new[] { discovery }, effect: new OperationEffect(new[] { flag }));
+            => new NNNActionDefinition(id, name, name, NNNActionKind.Operation, required, new[] { discovery }, effect: new OperationEffect(new[] { flag }),
+                intentText: id == HintSignal ? "猫のサインを伝えると、接触の仕方が変わるか"
+                    : id == ArrangePlay ? "遊ぶきっかけを用意すると、一緒に過ごす時間が変わるか"
+                    : "配置のヒントを伝えると、部屋の使い方が変わるか");
         public static NNNActionDefinition Find(string id) => All.FirstOrDefault(x => x.Id == id);
     }
 }

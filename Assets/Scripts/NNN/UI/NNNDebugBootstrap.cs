@@ -9,7 +9,8 @@ namespace NNN
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Start()
         {
-            if (Object.FindObjectOfType<NNNDebugUI>() != null) return;
+            if (Object.FindFirstObjectByType<ObservationScenePresenter>() != null) return;
+            if (Object.FindFirstObjectByType<NNNDebugUI>() != null) return;
             var root = new GameObject("NNN Debug UI");
             Object.DontDestroyOnLoad(root);
             root.AddComponent<NNNDebugUI>();
