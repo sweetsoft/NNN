@@ -1,0 +1,382 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 142f9eab433a4ab8808cc582c9ed5404, type: 3}
+  m_Name: SatoKotaPresentation
+  m_EditorClassIdentifier: Assembly-CSharp::NNN.ObservationPresentationDefinition
+  Actions:
+  - ActionId: CAT_WALK
+    Motion: 1
+  - ActionId: CAT_RUN
+    Motion: 1
+  - ActionId: CAT_APPROACH
+    Motion: 1
+  - ActionId: CAT_ENTER_HOME
+    Motion: 1
+  - ActionId: CAT_EXPLORE
+    Motion: 1
+  - ActionId: CAT_LOOK
+    Motion: 2
+  - ActionId: CAT_SNIFF
+    Motion: 2
+  - ActionId: CAT_RUB
+    Motion: 2
+  - ActionId: HUMAN_LOOK
+    Motion: 2
+  - ActionId: CAT_JUMP
+    Motion: 10
+  - ActionId: CAT_PAW
+    Motion: 9
+  - ActionId: CAT_PLAY
+    Motion: 9
+  - ActionId: HUMAN_PC
+    Motion: 9
+  - ActionId: HUMAN_PLAY
+    Motion: 9
+  - ActionId: CAT_REST
+    Motion: 3
+  - ActionId: CAT_SIT
+    Motion: 3
+  - ActionId: CAT_EAT
+    Motion: 12
+  - ActionId: CAT_GROOM
+    Motion: 11
+  - ActionId: HUMAN_CROUCH
+    Motion: 4
+  - ActionId: HUMAN_PLACE
+    Motion: 6
+  - ActionId: HUMAN_CLEAR_TABLE
+    Motion: 6
+  - ActionId: HUMAN_HOLD
+    Motion: 7
+  Stages:
+  - EventId: KOTA_FIRST_CONTACT
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Door
+    CatDestination: 
+  - EventId: KOTA_ENTER_HOME
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Door
+    CatMarker: Cat_Door
+    CatDestination: 
+  - EventId: KOTA_START_COHABITATION
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Bed
+    CatDestination: 
+  - EventId: KOTA_DESK_INTERRUPTION
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_EVENING_PLAY
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_PLAY_ROUTINE_RESPONSE
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_VERTICAL_EXPLORATION
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_FOLLOW_HUMAN
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Desk
+    CatDestination: 
+  - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_DeskFloor
+    CatDestination: 
+  - EventId: KOTA_SHARED_DESK_SPACE
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: 
+  - EventId: KOTA_NORMAL_DESK_VISIT
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_DeskFloor
+    CatDestination: Cat_Desk
+  - EventId: KOTA_NORMAL_TOWER_JUMP
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_Tower
+  - EventId: KOTA_NORMAL_NEAR_DESK
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Spot
+    CatDestination: 
+  - EventId: KOTA_NORMAL_REST
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Bed
+    CatDestination: 
+  - EventId: KOTA_NORMAL_NIGHT_RUN
+    SceneId: 
+    BackgroundId: HOME
+    HumanMarker: Human_Default
+    CatMarker: Cat_Default
+    CatDestination: Cat_DeskFloor
+  Information:
+  - Id: KNOW_KOTA_HIGH_EVENING_ACTIVITY
+    Label: "\u5915\u65B9\uFF5E\u591C\u306B\u6D3B\u767A"
+  - Id: KNOW_KOTA_HIGH_PLAY_DRIVE
+    Label: "\u904A\u3073\u3078\u306E\u53CD\u5FDC\u304C\u5F37\u3044"
+  - Id: KNOW_KOTA_VERTICAL_PREFERENCE
+    Label: "\u9AD8\u3044\u5834\u6240\u3092\u597D\u3093\u3067\u4F7F\u3046"
+  - Id: KNOW_KOTA_EXPLORATION_DRIVE
+    Label: "\u90E8\u5C4B\u3092\u5DE1\u56DE\u3059\u308B\u50BE\u5411"
+  - Id: KNOW_KOTA_WANTS_HUMAN_PROXIMITY
+    Label: "\u4F50\u85E4\u306E\u8FD1\u304F\u3067\u904E\u3054\u3059\u50BE\u5411"
+  - Id: EVENING_PLAY_ROUTINE_AVAILABLE
+    Label: "\u5E30\u5B85\u5F8C\u306B\u904A\u3076\u6642\u9593"
+  - Id: ALLOWED_VERTICAL_ROUTE_AVAILABLE
+    Label: "\u767B\u3063\u3066\u3088\u3044\u9AD8\u6240\u52D5\u7DDA"
+  - Id: CAT_TOWER_INSTALLED
+    Label: "\u30AD\u30E3\u30C3\u30C8\u30BF\u30EF\u30FC"
+  - Id: DESK_SIDE_CAT_SPOT_AVAILABLE
+    Label: "\u673A\u6A2A\u306E\u732B\u7528\u30B9\u30DA\u30FC\u30B9"
+  - Id: FRAGILE_DESK_OBJECTS_STORED
+    Label: "\u58CA\u308C\u3084\u3059\u3044\u5C0F\u7269\u3092\u53CE\u7D0D"
+  LogStages:
+  - EventId: KOTA_FIRST_CONTACT
+    LogIndex: 1
+    CatMarker: 
+    CatDestination: Cat_NearHuman
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ENTER_HOME
+    LogIndex: 0
+    CatMarker: 
+    CatDestination: Cat_Default
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ENTER_HOME
+    LogIndex: 2
+    CatMarker: 
+    CatDestination: Cat_OtherSide
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_DESK_INTERRUPTION
+    LogIndex: 1
+    CatMarker: 
+    CatDestination: Cat_DeskFloor
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_DESK_INTERRUPTION
+    LogIndex: 2
+    CatMarker: 
+    CatDestination: Cat_Desk
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_DESK_INTERRUPTION
+    LogIndex: 3
+    CatMarker: Cat_Desk
+    CatDestination: 
+    HumanMarker: 
+    PropId: PEN
+    PropDestination: Pen_Floor
+  - EventId: KOTA_DESK_INTERRUPTION
+    LogIndex: 4
+    CatMarker: Cat_DeskFloor
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_DESK_INTERRUPTION
+    LogIndex: 5
+    CatMarker: Cat_Default
+    CatDestination: Cat_DeskFloor
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_EVENING_PLAY
+    LogIndex: 0
+    CatMarker: 
+    CatDestination: Cat_OtherSide
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_EVENING_PLAY
+    LogIndex: 1
+    CatMarker: 
+    CatDestination: Cat_Shelf
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_EVENING_PLAY
+    LogIndex: 3
+    CatMarker: Cat_Default
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_PLAY_ROUTINE_RESPONSE
+    LogIndex: 2
+    CatMarker: 
+    CatDestination: Cat_DeskFloor
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_PLAY_ROUTINE_RESPONSE
+    LogIndex: 4
+    CatMarker: 
+    CatDestination: Cat_Desk
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_VERTICAL_EXPLORATION
+    LogIndex: 0
+    CatMarker: 
+    CatDestination: Cat_Shelf
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_VERTICAL_EXPLORATION
+    LogIndex: 2
+    CatMarker: Cat_Default
+    CatDestination: Cat_DeskFloor
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
+    LogIndex: 0
+    CatMarker: 
+    CatDestination: Cat_Tower
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
+    LogIndex: 1
+    CatMarker: Cat_Tower
+    CatDestination: Cat_Window
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
+    LogIndex: 3
+    CatMarker: Cat_DeskFloor
+    CatDestination: Cat_Desk
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
+    LogIndex: 4
+    CatMarker: Cat_Desk
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_FOLLOW_HUMAN
+    LogIndex: 2
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: Human_OtherSide
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_FOLLOW_HUMAN
+    LogIndex: 3
+    CatMarker: Cat_DeskFloor
+    CatDestination: Cat_OtherSide
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
+    LogIndex: 0
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: FRAGILE
+    PropDestination: Object_Storage
+  - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
+    LogIndex: 2
+    CatMarker: Cat_Default
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_SHARED_DESK_SPACE
+    LogIndex: 1
+    CatMarker: 
+    CatDestination: Cat_DeskFloor
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_SHARED_DESK_SPACE
+    LogIndex: 2
+    CatMarker: 
+    CatDestination: Cat_Spot
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_SHARED_DESK_SPACE
+    LogIndex: 3
+    CatMarker: Cat_Spot
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
+  - EventId: KOTA_SHARED_DESK_SPACE
+    LogIndex: 5
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: PEN
+    PropDestination: Pen_Floor
+  GuidedActions:
+  - SKIP
+  - SKIP
+  - SKIP
+  - INVESTIGATE_ACTIVITY_PATTERN
+  - OP_CREATE_PLAY_ROUTINE
+  - INVESTIGATE_VERTICAL_EXPLORATION
+  - OP_CREATE_ALLOWED_VERTICAL_ROUTE
+  - SKIP
+  - INVESTIGATE_HUMAN_PROXIMITY
+  - OP_CREATE_DESK_SIDE_CAT_SPOT
+  - SKIP
+  HumanName: "\u4F50\u85E4"
+  CatName: "\u30B3\u30BF"
+  SliceTitle: SatoKota Vertical Slice

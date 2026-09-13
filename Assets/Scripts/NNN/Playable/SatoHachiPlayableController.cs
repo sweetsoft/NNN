@@ -19,6 +19,7 @@ namespace NNN
     {
         public ObservationScenePresenter Presentation;
         public ObservationPresentationDefinition Definition;
+        public ObservationPlayableContent Content;
         public int Seed = 42;
         public bool AutoAdvance;
         public bool GuidedMode;
@@ -49,8 +50,10 @@ namespace NNN
         public void Restart()
         {
             Presentation.Stop(); Measurements.Clear(); DayResults.Clear(); SliceComplete = false; Error = null;
-            Route = SatoHachiObservationFactory.CreateRoute(); Simulator = new ObservationSimulator(Route, Seed);
-            insights = new ObservationInsightPresenter(SatoHachiInsightFactory.Create()); Reviews.Clear();
+            foreach (var prop in Presentation.Props) prop.ResetProp(true);
+            Route = Content != null ? Content.CreateRoute() : SatoHachiObservationFactory.CreateRoute();
+            Simulator = new ObservationSimulator(Route, Seed);
+            insights = new ObservationInsightPresenter(Content != null ? Content.CreateInsights() : SatoHachiInsightFactory.Create()); Reviews.Clear();
             string folder = Path.Combine(Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : Application.persistentDataPath, "Logs/Playable");
             Directory.CreateDirectory(folder);
             CsvPath = Path.Combine(folder, "play-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + ".csv");

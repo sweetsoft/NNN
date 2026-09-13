@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/SatoKotaVerticalSlice.unity
+    guid: 26d16818743f84c4cb6b1949acbf22a9
+  - enabled: 1
     path: Assets/test.unity
     guid: b52bec68718f33f4392656552648cede
   m_configObjects: {}

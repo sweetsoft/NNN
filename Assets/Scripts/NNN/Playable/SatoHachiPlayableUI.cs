@@ -46,7 +46,7 @@ namespace NNN
             GUI.color = previousColor;
             var old = GUI.matrix; GUI.matrix = Matrix4x4.TRS(new Vector3(left, top, 0), Quaternion.identity, Vector3.one * scale);
             WorldCamera.rect = new Rect((left + 24 * scale) / Screen.width, 1 - (top + 420 * scale) / Screen.height, 1232 * scale / Screen.width, 330 * scale / Screen.height);
-            Panel(0, 0, 1280, 84); Label(28, 17, 560, 50, "DAY " + Controller.Day.ToString("00") + "  /  HACHI", title);
+            Panel(0, 0, 1280, 84); Label(28, 17, 560, 50, "DAY " + Controller.Day.ToString("00") + "  /  " + Controller.Definition.CatName, title);
             Label(690, 28, 540, 36, "NNN   ·   OBSERVE / UNDERSTAND / ACT", small);
             Label(45, 100, 800, 38, Controller.Presentation.BackgroundId == "SHOPPING_STREET" ? "商店街  /  SHOPPING STREET" : "佐藤宅  /  HOME", small);
             Panel(24, 435, 1232, 94);
@@ -60,7 +60,7 @@ namespace NNN
             Panel(24, 847, 1232, 48);
             if (Controller.SliceComplete)
             {
-                Label(70, 580, 1150, 80, "SatoHachi Vertical Slice Complete", title);
+                Label(70, 580, 1150, 80, Controller.Definition.SliceTitle + " Complete", title);
                 if (GUI.Button(new Rect(900, 747, 300, 64), "もう一度プレイ", button)) Controller.Restart();
             }
             else if (Controller.Phase == ObservationDayPhase.Observing)

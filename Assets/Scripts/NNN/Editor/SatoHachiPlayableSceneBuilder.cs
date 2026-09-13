@@ -13,13 +13,13 @@ namespace NNN.Editor
     {
         public const string ScenePath = "Assets/Scenes/SatoHachiVerticalSlice.unity";
         private const string Root = "Assets/Playable";
-        [MenuItem("NNN/Playable/Open Sato Hachi DAY1-11")]
+        [MenuItem("NNN/Playable/Legacy Test/Open Sato Hachi DAY1-11")]
         public static void Open()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             if (!File.Exists(ScenePath)) CreateScene(); else EditorSceneManager.OpenScene(ScenePath);
         }
-        [MenuItem("NNN/Playable/Play Sato Hachi DAY1-11")]
+        [MenuItem("NNN/Playable/Legacy Test/Play Sato Hachi DAY1-11")]
         public static void OpenAndPlay()
         {
             Open(); EditorApplication.ExecuteMenuItem("Window/General/Game"); EditorApplication.isPlaying = true;
@@ -112,12 +112,12 @@ namespace NNN.Editor
             if (m == null) { m = new Material(Shader.Find("Unlit/Color")); AssetDatabase.CreateAsset(m, path); }
             m.color = color; EditorUtility.SetDirty(m); return m;
         }
-        private static Transform Shape(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
+        internal static Transform Shape(Transform parent, string name, PrimitiveType primitive, Vector3 position, Vector3 scale, Material material)
         {
             var g = GameObject.CreatePrimitive(primitive); g.name = name; g.transform.SetParent(parent, false); g.transform.localPosition = position; g.transform.localScale = scale;
             g.GetComponent<Renderer>().sharedMaterial = material; var collider = g.GetComponent<Collider>(); if (collider != null) UnityEngine.Object.DestroyImmediate(collider); return g.transform;
         }
-        private static CharacterActorView Actor(string name, bool cat, Material color, Material light, Material dark)
+        internal static CharacterActorView Actor(string name, bool cat, Material color, Material light, Material dark)
         {
             var root = new GameObject(name); var actor = root.AddComponent<CharacterActorView>();
             actor.Visual = new GameObject("Replaceable Visual").transform; actor.Visual.SetParent(root.transform, false);
