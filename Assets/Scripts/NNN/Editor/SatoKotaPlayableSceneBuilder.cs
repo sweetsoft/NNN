@@ -9,6 +9,11 @@ using static NNN.Editor.SatoHachiPlayableSceneBuilder;
 
 namespace NNN.Editor
 {
+    /// <summary>
+    /// コタのGame View用Sceneを再生成するEditor専用ツール。
+    /// 物語はFactory、動作と配置はPresentationDefinition、見た目はSceneの仮素材へ分離する。
+    /// 再生成は保存済みSceneを上書きするため、Sceneを手で調整した場合は先に差分を確認する。
+    /// </summary>
     public static class SatoKotaPlayableSceneBuilder
     {
         public const string KotaScenePath = "Assets/Scenes/SatoKotaVerticalSlice.unity";
@@ -26,9 +31,15 @@ namespace NNN.Editor
             if (!File.Exists(KotaScenePath)) CreateKotaScene(); else EditorSceneManager.OpenScene(KotaScenePath);
             EditorApplication.ExecuteMenuItem("Window/General/Game"); EditorApplication.isPlaying = true;
         }
+        /// <summary>
+        /// Content・Presentation・Materialを既存パスで再利用し、Sceneのオブジェクトを作り直す。
+        /// コタSceneをビルド対象の先頭に置くが、既存のテストScene登録は削除しない。
+        /// </summary>
         public static void CreateKotaScene()
         {
             Directory.CreateDirectory(Root); Directory.CreateDirectory("Assets/Scenes"); AssetDatabase.Refresh();
+            // NewSceneは未使用アセットの解放を伴う。参照を取得する前にSceneを切り替え、
+            // 取得したばかりのPresentation参照が途中で破棄されるのを避ける。
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var d = Asset<ObservationPresentationDefinition>("SatoKotaPresentation"); FillDefinition(d);
             var content = Asset<SatoKotaPlayableContent>("SatoKotaContent");
@@ -59,6 +70,8 @@ namespace NNN.Editor
             Cube(spot.transform, "Cushion", new Vector3(.7f, .6f, 0), new Vector3(1, .22f, .85f), teal);
             Cube(spot.transform, "Support", new Vector3(.7f, .25f, 0), new Vector3(.65f, .5f, .55f), wood);
             var toy = Shape(home.transform, "Cat Toy", PrimitiveType.Sphere, new Vector3(1, .12f, -.35f), Vector3.one * .24f, red);
+            // 座標はScene生成時にMarkerへ集約する。再生コードは名前だけを参照するため、
+            // 机の高さや小物の落下先を変更してもSimulatorのログや条件を編集する必要はない。
             var markers = new GameObject("Scene Markers").transform;
             Mark(markers, "Human_Default", -1.6f, 0, .9f); Mark(markers, "Human_Door", -3, 0);
             Mark(markers, "Human_OtherSide", 2, 0); Mark(markers, "Cat_Default", 1.2f, 0);
@@ -73,6 +86,8 @@ namespace NNN.Editor
             pen.Id = "PEN"; pen.RestMarker = markers.Find("Pen_Desk");
             var fragile = Cube(home.transform, "Fragile Object", markers.Find("Object_Desk").position, new Vector3(.25f, .3f, .25f), white).gameObject.AddComponent<ObservationPropView>();
             fragile.Id = "FRAGILE"; fragile.RestMarker = markers.Find("Object_Desk");
+            // 人間が収納した事実を見たあと、翌日また机へ戻る矛盾を避ける。
+            // ペンは毎朝の作業用なので既定のResetEachDay=trueを使う。
             fragile.ResetEachDay = false;
             var human = Actor("HumanActor", false, teal, white, ink); var cat = Actor("CatActor", true, kota, white, ink);
             var action = new GameObject("ObservationView").AddComponent<ObservationActionPresenter>(); action.Definition = d; action.Human = human; action.Cat = cat;
@@ -90,6 +105,10 @@ namespace NNN.Editor
                 .Concat(EditorBuildSettings.scenes.Where(x => x.path != KotaScenePath)).ToArray();
             AssetDatabase.Refresh(); Debug.Log("KOTA PLAYABLE SCENE: " + KotaScenePath);
         }
+        /// <summary>
+        /// Actionのfallback、場面の初期配置、ログ途中の演出、情報の表示名、Guided選択を登録する。
+        /// ログを追加・並べ替えした際はStepの添字も確認する。素材不足をイベント条件へ持ち込まない。
+        /// </summary>
         public static void FillDefinition(ObservationPresentationDefinition d)
         {
             d.Actions.Clear(); d.Stages.Clear(); d.LogStages.Clear(); d.Information.Clear(); d.GuidedActions.Clear();
@@ -129,6 +148,7 @@ namespace NNN.Editor
             => d.Stages.Add(new SceneStageBinding { EventId = id, CatMarker = cat, HumanMarker = human, CatDestination = to });
         private static void Step(ObservationPresentationDefinition d, string id, int index, string at = null, string to = null, string human = null, string prop = null, string propTo = null)
             => d.LogStages.Add(new LogStageBinding { EventId = id, LogIndex = index, CatMarker = at, CatDestination = to, HumanMarker = human, PropId = prop, PropDestination = propTo });
+        // 既存アセットを更新し、Sceneから参照するGUIDを再生成のたびに変えない。
         private static T Asset<T>(string name) where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(Root + "/" + name + ".asset");

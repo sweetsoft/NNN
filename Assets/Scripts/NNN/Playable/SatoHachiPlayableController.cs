@@ -19,6 +19,7 @@ namespace NNN
     {
         public ObservationScenePresenter Presentation;
         public ObservationPresentationDefinition Definition;
+        /// <summary>Sceneが選ぶ猫別コンテンツ。未設定なら保存済みハチSceneとの互換性を維持する。</summary>
         public ObservationPlayableContent Content;
         public int Seed = 42;
         public bool AutoAdvance;
@@ -47,6 +48,10 @@ namespace NNN
         private float nextAuto;
         public bool CanAdvance => !SliceComplete && Phase != ObservationDayPhase.ActionSelection && !Presentation.IsPlaying;
         private void Start() { Restart(); }
+        /// <summary>
+        /// Route・Simulator・Insight比較履歴・計測を新しいセッションへ切り替える。
+        /// 小物は日次保持設定に関係なく初期配置へ戻し、前回の片付けを新しいプレイへ持ち越さない。
+        /// </summary>
         public void Restart()
         {
             Presentation.Stop(); Measurements.Clear(); DayResults.Clear(); SliceComplete = false; Error = null;
@@ -66,6 +71,8 @@ namespace NNN
             Review = null; ReviewVisible = false;
             measurement = new PlayableDayMeasurement { Day = day, StartUtc = DateTime.UtcNow.ToString("O"), Automated = AutoAdvance };
             dayStart = Time.realtimeSinceStartupAsDouble;
+            // 翌朝のOperationEffectを先に適用してから、そのWorldFlagsに設備表示を合わせる。
+            // 当日の観察は一度だけ実行し、以降は確定したScenesを再生する。Viewで再抽選しない。
             Simulator.BeginDay(day);
             Presentation.SyncWorld(Simulator.State.WorldFlags);
             while (Simulator.GenerateNextEvent() != null) Simulator.ExecuteNextEvent();
@@ -121,6 +128,7 @@ namespace NNN
         {
             if (Phase != ObservationDayPhase.ActionSelection || !Options.Any(x => x.Definition.Id == id && x.IsAvailable)) return;
             SelectedAction = Route.Actions.Single(x => x.Id == id);
+            // 比較元は工作適用前のスナップショット。翌日のInsightが実際の環境差を説明するために使う。
             if (SelectedAction.Kind == NNNActionKind.Operation) insights.RecordOperation(id, Simulator);
             Investigation = Simulator.ApplyNNNAction(id); measurement.SelectedActionId = id; measurement.Clicks++;
         }

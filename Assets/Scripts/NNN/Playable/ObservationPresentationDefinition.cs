@@ -16,10 +16,17 @@ namespace NNN
         public string CatDestination;
     }
     [Serializable] public sealed class InformationLabel { public string Id; public string Label; }
+    /// <summary>
+    /// 場面の途中で必要になる配置・移動・小物演出。イベントの条件や効果とは独立した表示データ。
+    /// 現在はEventIdと場面内の0始まりLogIndexで照合するため、SceneId別の同一番号を区別しない。
+    /// コタは各イベントを一場面として使う。複数Sceneへ分割する場合は照合方法も確認する。
+    /// </summary>
     [Serializable] public sealed class LogStageBinding
     {
         public string EventId;
         public int LogIndex;
+        // Markerは即時配置、Destinationは動作に伴う移動先。空欄はその項目を上書きしない。
+        // PropIdはObservationPropView.Id、各Marker名はObservationScenePresenter.Markers配下を指す。
         public string CatMarker, CatDestination, HumanMarker, PropId, PropDestination;
     }
     [CreateAssetMenu(menuName = "NNN/Observation/Presentation")]

@@ -9,6 +9,10 @@ using K = NNN.SatoKotaObservationFactory;
 
 namespace NNN.Editor
 {
+    /// <summary>
+    /// コタの物語が既存の条件機構だけで成立することを検証する。
+    /// Guidedの到達日だけでなく、SKIP・別選択で未実施の改善を表示しないことも対象にする。
+    /// </summary>
     public static class SatoKotaVerification
     {
         private static readonly string[] Expected = { K.Contact, K.Entry, K.Living, K.DeskTrouble, K.Night, K.PlayResponse,
@@ -18,9 +22,13 @@ namespace NNN.Editor
         {
             var report = new StringBuilder("# SatoKota Guided 表示一覧\n\nSeed 42。各日のAction前の観察とInsight。\n\n| DAY | Event / Scenes | CAT REPORT | UPDATE | CHANGE | QUESTION | ACTION |\n|---|---|---|---|---|---|---|\n");
             int days = 0;
+            // 0〜31で揺らぎを検証し、42はGame Viewの既定Seedと表示一覧の再現に使う。
+            // policy 0=Guided、1=全SKIP、2=その日に選択可能な候補からSeed付きで選ぶ経路。
             foreach (int seed in Enumerable.Range(0, 32).Concat(new[] { 42 }))
             for (int policy = 0; policy < 3; policy++)
             {
+                // baselineにはInsightを接続しない。同じSeedとActionを与えて、表示処理が
+                // 状態・候補・イベント・ログへ影響しないことを日ごとに比較する。
                 var route = K.CreateRoute(); var sim = new ObservationSimulator(route, seed); var baseline = new ObservationSimulator(K.CreateRoute(), seed);
                 var insights = new ObservationInsightPresenter(SatoKotaInsightFactory.Create()); var random = new System.Random(seed);
                 string traits = string.Join(",", route.Cat.Traits.Select(x => x.Id));
@@ -80,6 +88,11 @@ namespace NNN.Editor
             Directory.CreateDirectory("outputs"); File.WriteAllText("outputs/sato-kota-insight-displays.md", report + "\nPASS: " + days + " DAY / 33 Seed × Guided, SKIP, Alternative / no spoiler / invariance / partial experiments / trait ablation.\n");
             Debug.Log("SATO KOTA: PASS / " + days + " days / 33 seeds x 3 policies / no spoiler / partial experiments / independent state / unchanged personality / invariance");
         }
+        /// <summary>
+        /// 到達日だけの検証では見逃す条件の効きを直接確認する。
+        /// 必要な履歴を用意したうえでTraitを一つだけ外し、対応イベントが候補から外れることを調べる。
+        /// 高所の実験には遊び工作を要求しないこと、人への接近が高所工作で消えないことも確認する。
+        /// </summary>
         private static void VerifyConditions()
         {
             var route = K.CreateRoute(); var simulator = new ObservationSimulator(route, 42); simulator.BeginDay(1); var state = simulator.State;

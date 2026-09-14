@@ -3,6 +3,11 @@ using static NNN.SatoKotaObservationFactory;
 
 namespace NNN
 {
+    /// <summary>
+    /// コタの観察を短い事実・変化・問いへ変換する表示定義。
+    /// イベントの発生条件や状態を変更せず、今日の観察と取得済みの情報だけを根拠にする。
+    /// ハチと共有するのはPresenterの選択・比較処理であり、物語の文言はここに分離する。
+    /// </summary>
     public static class SatoKotaInsightFactory
     {
         public static List<ObservationInsightDefinition> Create()
@@ -19,6 +24,9 @@ namespace NNN
             d = Add(list, Night, "遊ぶ時間を増やすと、夜の行動は変わる？", "コタは夜に走り、棚へ登った", "佐藤がおもちゃを動かすと強く反応し、そのあと休んだ");
             Change(d, "NEW 夕方以降に活発な行動を確認");
             d = Add(list, PlayResponse, "コタが机や棚へ登る理由は、遊びだけ？", "佐藤と遊ぶ時間が増えた", "遊んだあとの走り回りは減った", "それでも机には登っている");
+            // AfterOperationは、Controllerが工作適用前に記録した環境との差を確認する。
+            // PreviousEventは「直前のReviewの日」にNightがあった場合だけ成立するため、
+            // 別順序ではCHANGEが一件になることもある。件数を埋めるために比較を捏造しない。
             d.Condition.WorldFlags = new[] { PlayRoutine };
             Change(d, "↓ 夜の走り回りが減った", InsightComparison.AfterOperation, CreatePlay);
             Change(d, "→ 机や棚への侵入は残っている", InsightComparison.PreviousEvent, Night);
@@ -38,6 +46,11 @@ namespace NNN
             // 通常観察のみの日はログを要約する。未実行の工作や未調査の理由は補わない。
             return list;
         }
+        /// <summary>
+        /// 実行済みEventIdに対応する一組を登録する。UPDATEは定義と同じCondition参照を持つため、
+        /// 登録後のWorldFlagsやKnowledgeの追加も事実の表示条件へ反映される。
+        /// factsの件数を表示上限にし、弱い通常観察で最大三件まで埋めない。
+        /// </summary>
         private static ObservationInsightDefinition Add(List<ObservationInsightDefinition> list, string id, string question, params string[] facts)
         {
             var d = new ObservationInsightDefinition { Id = "INSIGHT_" + id, Priority = 100, CurrentQuestion = question,
@@ -45,6 +58,8 @@ namespace NNN
             for (int i = 0; i < facts.Length; i++) d.Updates.Add(new InsightEntry { Id = id + "/" + i, Text = facts[i], Condition = d.Condition });
             list.Add(d); return d;
         }
+        // CHANGEは比較種別を別に持つConditionを作る。WorldFlags/Knowledgeを差し替える場合は
+        // この呼び出しより前に行うこと。Noneでも当日のイベントと根拠条件の照合は省略しない。
         private static void Change(ObservationInsightDefinition d, string text, InsightComparison comparison = InsightComparison.None, string compare = null)
             => d.Changes.Add(new InsightEntry { Id = d.Id + "/CHANGE/" + d.Changes.Count, Text = text,
                 Condition = new InsightCondition { TodayEvents = d.Condition.TodayEvents, WorldFlags = d.Condition.WorldFlags,
