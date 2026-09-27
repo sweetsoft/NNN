@@ -19,6 +19,7 @@ namespace NNN.Editor
         // staticコンストラクタがEditorの更新へ再接続し、Tick内でControllerの初期化を待つ。
         private const string Key = "NNN.KotaPlayableVerification";
         private static double deadline;
+        private static bool humanAnimationAdvanced;
         private static readonly System.Collections.Generic.HashSet<Sprite> idleFrames = new System.Collections.Generic.HashSet<Sprite>();
         static SatoKotaPlayableVerification() { EditorApplication.update += Tick; }
         /// <summary>Scene生成は別の検証入口が担当する。ここでは保存済みSceneの参照切れも検出する。</summary>
@@ -40,6 +41,9 @@ namespace NNN.Editor
                 Check(sprite != null && sprite.Renderer != null && sprite.Renderer.sprite != null, "Cat sprite references");
                 if (sprite.CurrentClip == sprite.Idle) idleFrames.Add(sprite.Renderer.sprite);
                 c.AutoAdvance = true;
+                var humanModel = c.Presentation.Actions.Human.ModelAnimation;
+                Check(humanModel != null, "Human prefab reference");
+                humanAnimationAdvanced |= humanModel.MasterAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > .02f;
                 Check(c.Route.Cat.Id == "CAT_KOTA" && c.Definition.CatName == "コタ", "Wrong demo content");
                 Check(c.Presentation.BackgroundId.StartsWith("HOME"), "Outdoor background");
                 Check(string.IsNullOrEmpty(c.Error), c.Error);
@@ -52,6 +56,8 @@ namespace NNN.Editor
                     Check(prop.Target.activeSelf == (allowed && !temporaryHidden), "World prop visibility");
                 }
                 if (!c.SliceComplete) return;
+                Check(humanAnimationAdvanced, "Stepped human animation must advance during Play Mode");
+                HumanPrefabSceneSetup.Verify(c.Presentation.Actions.Human);
                 Check(idleFrames.Count > 1, "Idle sprite frames must advance during Play Mode");
                 var actor = c.Presentation.Actions.Cat;
                 foreach (var pair in new[] {

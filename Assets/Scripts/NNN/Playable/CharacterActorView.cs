@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace NNN
 {
@@ -15,7 +15,9 @@ namespace NNN
         public Transform Gesture;
         /// <summary>任意のスプライト素材。設定時はパーツ変形を行わず、クリップ再生へ委譲する。</summary>
         public SpriteActorAnimation SpriteAnimation;
-        // 仮モーション種別はPresenterで解決する。生のActionIdはスプライト素材選択にだけ渡す。
+        /// <summary>任意の3Dモデル素材。MasterAnimatorへの再生を委譲し、仮パーツ変形を省略する。</summary>
+        public ModelActorAnimation ModelAnimation;
+        // 仮モーション種別はPresenterで解決する。生のActionIdは各素材Presenterへ渡す。
         private ActorMotion motion;
         // Awake時の見た目サイズと各パーツ位置。毎フレームの変形を累積させず、この基準へ戻して計算する。
         private Vector3 baseScale;
@@ -46,9 +48,11 @@ namespace NNN
         {
             var facing = Visual.localRotation;
             bool flip = SpriteAnimation != null && SpriteAnimation.Renderer.flipX;
+            var modelFacing = ModelAnimation != null ? ModelAnimation.transform.localRotation : Quaternion.identity;
             ResetPose(); motion = action; started = Time.unscaledTime;
             Visual.localRotation = facing;
             if (SpriteAnimation != null) { SpriteAnimation.Play(actionId); SpriteAnimation.Renderer.flipX = flip; }
+            if (ModelAnimation != null) { ModelAnimation.Play(actionId); ModelAnimation.transform.localRotation = modelFacing; }
         }
         /// <summary>
         /// Markerの位置への移動を予約し、進行方向へ見た目を向ける。実際の位置更新はUpdateで行う。
@@ -62,13 +66,14 @@ namespace NNN
         /// </summary>
         public void PlaceAt(Transform marker) { if (marker != null) transform.position = marker.position; moving = false; }
         /// <summary>
-        /// スプライトは左右反転、それ以外はX符号でVisualをY軸に±18度回す。
-        /// LookRotationのような完全な方向追従ではなく、ルートや移動先も変更しない。
+        /// スプライトは左右反転、3Dモデルは移動方向、それ以外はX符号でVisualをY軸に±18度回す。
+        /// 見た目の向きだけを変更し、ルートや移動先は変更しない。
         /// ほぼゼロの方向では現在の向きを維持する。
         /// </summary>
         public void Face(Vector3 direction)
         {
             if (SpriteAnimation != null) SpriteAnimation.Face(direction);
+            else if (ModelAnimation != null) ModelAnimation.Face(direction);
             else if (direction.sqrMagnitude > 0.001f) Visual.localRotation = Quaternion.Euler(0, direction.x < 0 ? -18 : 18, 0);
         }
         /// <summary>見た目の階層だけを表示／非表示にする。ルートのUpdateや移動処理は停止しない。</summary>
@@ -82,6 +87,7 @@ namespace NNN
         {
             motion = ActorMotion.Idle; moving = false;
             if (SpriteAnimation != null) SpriteAnimation.ResetPose();
+            if (ModelAnimation != null) ModelAnimation.ResetPose();
             Visual.localPosition = Vector3.zero; Visual.localScale = baseScale; Visual.localRotation = Quaternion.identity;
             if (Head != null) { Head.localPosition = headPosition; Head.localRotation = Quaternion.identity; }
             if (Gesture != null) { Gesture.localPosition = gesturePosition; Gesture.localRotation = Quaternion.identity; }
@@ -92,9 +98,14 @@ namespace NNN
             float t = Time.unscaledTime - started;
             // ワールド座標を毎秒2 Unity単位で目標へ近づける。距離0.01未満で停止するため、
             // 到達判定時に目標へ厳密にスナップする仕様ではない。経路探索や衝突判定も行わない。
-            if (moving) { transform.position = Vector3.MoveTowards(transform.position, destination, 2.0f * Time.unscaledDeltaTime); if (Vector3.Distance(transform.position, destination) < 0.01f) moving = false; }
-            // スプライトは描かれた姿勢を使用する。仮モデルの縮小や上下動を重ねない。
-            if (SpriteAnimation != null) return;
+            if (moving)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, destination, 2.0f * Time.unscaledDeltaTime);
+                if (Vector3.Distance(transform.position, destination) < .01f)
+                { moving = false; if (ModelAnimation != null) ModelAnimation.MovementCompleted(); }
+            }
+            // 素材付きActorはクリップの姿勢を使用する。仮モデルの縮小や上下動を重ねない。
+            if (SpriteAnimation != null || ModelAnimation != null) return;
             // 各パーツで共有する周期波。8はラジアン/秒であり、1秒に8往復する指定ではない。
             float wave = Mathf.Sin(t * 8);
             // Jumpは最大0.5、Walkは最大0.06の上下動をVisualにだけ加える。

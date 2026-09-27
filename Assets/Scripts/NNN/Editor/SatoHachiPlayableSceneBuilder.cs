@@ -122,17 +122,7 @@ namespace NNN.Editor
             var root = new GameObject(name); var actor = root.AddComponent<CharacterActorView>();
             actor.Visual = new GameObject("Replaceable Visual").transform; actor.Visual.SetParent(root.transform, false);
             if (cat) { CatSpriteSceneSetup.Attach(actor); return actor; }
-            Shape(actor.Visual, "Body", cat ? PrimitiveType.Sphere : PrimitiveType.Capsule, new Vector3(0, cat ? .36f : .85f, 0), cat ? new Vector3(.9f, .55f, .5f) : new Vector3(.65f, .65f, .5f), color);
-            actor.Head = Shape(actor.Visual, "Head", PrimitiveType.Sphere, new Vector3(0, cat ? .69f : 1.65f, -.08f), Vector3.one * (cat ? .56f : .48f), cat ? color : light);
-            Shape(actor.Head, "EyeL", PrimitiveType.Sphere, new Vector3(-.22f, .08f, -.43f), new Vector3(.14f, .2f, .1f), dark);
-            Shape(actor.Head, "EyeR", PrimitiveType.Sphere, new Vector3(.22f, .08f, -.43f), new Vector3(.14f, .2f, .1f), dark);
-            if (cat)
-            {
-                Shape(actor.Head, "EarL", PrimitiveType.Cube, new Vector3(-.3f, .43f, 0), new Vector3(.23f, .4f, .25f), color).localRotation = Quaternion.Euler(0, 0, -20);
-                Shape(actor.Head, "EarR", PrimitiveType.Cube, new Vector3(.3f, .43f, 0), new Vector3(.23f, .4f, .25f), color).localRotation = Quaternion.Euler(0, 0, 20);
-                Shape(actor.Visual, "Tail", PrimitiveType.Capsule, new Vector3(.53f, .46f, .1f), new Vector3(.12f, .3f, .12f), color).localRotation = Quaternion.Euler(0, 0, -30);
-            }
-            actor.Gesture = Shape(actor.Visual, cat ? "Paw" : "Hand", PrimitiveType.Sphere, new Vector3(.28f, cat ? .12f : .8f, -.28f), Vector3.one * .2f, light);
+            HumanPrefabSceneSetup.Attach(actor);
             return actor;
         }
     }
