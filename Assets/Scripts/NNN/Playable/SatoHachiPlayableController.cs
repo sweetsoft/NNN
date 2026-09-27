@@ -50,7 +50,7 @@ namespace NNN
         private void Start() { Restart(); }
         /// <summary>
         /// Route・Simulator・Insight比較履歴・計測を新しいセッションへ切り替える。
-        /// 小物は日次保持設定に関係なく初期配置へ戻し、前回の片付けを新しいプレイへ持ち越さない。
+        /// 小物の演出回数も初期化し、前回の一時表示状態を新しいプレイへ持ち越さない。
         /// </summary>
         public void Restart()
         {

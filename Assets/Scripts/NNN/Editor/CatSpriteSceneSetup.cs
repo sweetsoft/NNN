@@ -49,7 +49,7 @@ namespace NNN.Editor
             animation.Actions.Add(new SpriteActorAnimation.ActionClip { ActionId = "CAT_SIT", Clip = sit });
             animation.Actions.Add(new SpriteActorAnimation.ActionClip { ActionId = "CAT_REST", Clip = rest });
             // 同じ移動表現を使うActionにも歩行素材を共有する。物語のActionId自体は変更しない。
-            foreach (var id in new[] { "CAT_WALK", "CAT_APPROACH", "CAT_ENTER_HOME", "CAT_EXPLORE", "HARNESS_LOW_WALK" })
+            foreach (var id in new[] { "CAT_WALK", "CAT_APPROACH", "CAT_ENTER_HOME", "CAT_EXPLORE", "HARNESS_LOW_WALK", "CAT_FOLLOW" })
                 animation.Actions.Add(new SpriteActorAnimation.ActionClip { ActionId = id, Clip = walk });
             animation.Actions.Add(new SpriteActorAnimation.ActionClip { ActionId = "CAT_RUN", Clip = run });
             animation.Actions.Add(new SpriteActorAnimation.ActionClip { ActionId = "CAT_PAW", Clip = paw });

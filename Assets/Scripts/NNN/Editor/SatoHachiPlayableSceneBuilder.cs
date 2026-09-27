@@ -103,7 +103,7 @@ namespace NNN.Editor
             d.GuidedActions.AddRange(new[] { NNNActionCatalog.Skip, NNNActionCatalog.Skip, NNNActionCatalog.Skip, H.InvestigateIndoor, H.InstallTower, H.InvestigatePast, H.PrepareGear, H.InvestigateHarness, H.InvestigateRoute, H.ShortTrip, NNNActionCatalog.Skip });
         }
         private static void Stage(ObservationPresentationDefinition d, string e, string s, string bg, string human, string cat, string to = null)
-            => d.Stages.Add(new SceneStageBinding { EventId = e, SceneId = s, BackgroundId = bg, HumanMarker = human, CatMarker = cat, CatDestination = to });
+            => d.Stages.Add(new SceneStageBinding { EventId = e, SceneId = s, BackgroundId = bg, HumanStartPoint = human, CatStartPoint = cat, CatDestination = to });
         private static void Marker(Transform parent, string name, float x, float y)
         { var t = new GameObject(name).transform; t.parent = parent; t.position = new Vector3(x, y, 0); }
         private static Material Material(string name, Color color)

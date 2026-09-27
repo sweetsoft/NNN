@@ -41,10 +41,16 @@ namespace NNN.Editor
                 if (sprite.CurrentClip == sprite.Idle) idleFrames.Add(sprite.Renderer.sprite);
                 c.AutoAdvance = true;
                 Check(c.Route.Cat.Id == "CAT_KOTA" && c.Definition.CatName == "コタ", "Wrong demo content");
-                Check(c.Presentation.BackgroundId == "HOME", "Outdoor background");
+                Check(c.Presentation.BackgroundId.StartsWith("HOME"), "Outdoor background");
                 Check(string.IsNullOrEmpty(c.Error), c.Error);
                 foreach (var prop in c.Presentation.WorldProps)
-                    Check(prop.Target.activeSelf == (c.Simulator.State.WorldFlags.Contains(prop.Flag) != prop.HideWhenSet), "World prop visibility");
+                {
+                    bool allowed = c.Simulator.State.WorldFlags.Contains(prop.Flag) != prop.HideWhenSet;
+                    // Worldは表示可能性を決める。Scene内のStored/Hiddenで一時非表示になるPropもある。
+                    bool temporaryHidden = c.Presentation.Props.Any(x => x.gameObject == prop.Target &&
+                        (x.State == ScenePropState.Stored || x.State == ScenePropState.Hidden));
+                    Check(prop.Target.activeSelf == (allowed && !temporaryHidden), "World prop visibility");
+                }
                 if (!c.SliceComplete) return;
                 Check(idleFrames.Count > 1, "Idle sprite frames must advance during Play Mode");
                 var actor = c.Presentation.Actions.Cat;
@@ -101,27 +107,32 @@ namespace NNN.Editor
                 }
                 foreach (var stage in c.Definition.LogStages)
                 {
-                    Check(c.Route.Events.Any(x => x.Id == stage.EventId && x.Logs.Count > stage.LogIndex), "Invalid log binding");
+                    Check(c.Route.Events.Any(x => x.Id == stage.EventId && x.Logs.Count > stage.StepIndex), "Invalid log binding");
                     foreach (var marker in new[] { stage.CatMarker, stage.CatDestination, stage.HumanMarker, stage.PropDestination }.Where(x => !string.IsNullOrEmpty(x)))
                         Check(c.Presentation.Markers.Find(marker) != null, "Missing marker " + marker);
+                    foreach (var step in stage.Steps)
+                    {
+                        if (!string.IsNullOrEmpty(step.TargetPointId)) Check(c.Presentation.Markers.Find(step.TargetPointId) != null, "Missing step point");
+                        if (!string.IsNullOrEmpty(step.TargetPropId)) Check(c.Presentation.Props.Any(x => x.Id == step.TargetPropId), "Missing step prop");
+                    }
                 }
-                // 発火回数に加えて到着位置も確認する。ペンは二回落ち、収納した小物は翌日も保持される。
+                // 終了位置は最後のSceneのSetup次第。永続位置ではなく演出回数とWorld由来状態を確認する。
                 var pen = c.Presentation.Props.Single(x => x.Id == "PEN");
-                Check(pen.Moves == 2 && Vector3.Distance(pen.transform.position, c.Presentation.Markers.Find("Pen_Floor").position) < .05f, "Two visible pen drops");
+                Check(pen.Moves == 2, "Two pen drop sequences");
                 Check(c.Presentation.Props.Single(x => x.Id == "FRAGILE").Moves == 1, "Human clearing presentation");
                 var fragile = c.Presentation.Props.Single(x => x.Id == "FRAGILE");
-                Check(Vector3.Distance(fragile.transform.position, c.Presentation.Markers.Find("Object_Storage").position) < .05f, "Stored object returned next day");
+                Check(fragile.State == ScenePropState.Stored && !fragile.gameObject.activeSelf && Vector3.Distance(fragile.transform.position, c.Presentation.Markers.Find("Object_Storage").position) < .05f, "World setup reconstructs storage");
                 Check(c.Route.Events.SelectMany(x => x.Logs).All(x => c.Definition.Actions.Any(a => a.ActionId == x.ActionId)), "Animation mapping coverage");
                 Debug.Log("KOTA PLAYABLE: PASS / DAY1-11 / pen drops x2 / human clearing / world props / action mapping / presentation invariance. CSV: " + c.CsvPath);
                 SessionState.SetBool(Key, false);
-                // 日跨ぎの保持と再プレイの初期化を区別する。Restartでは小物の位置・回数とも初期値へ戻す。
-                c.AutoAdvance = false; c.Restart();
-                Check(pen.Moves == 0 && fragile.Moves == 0 && Vector3.Distance(fragile.transform.position, fragile.RestMarker.position) < .05f, "Replay prop reset");
-                // 共通Presentationを変更した影響を、既存ルートのSimulation・Insightでも確認する。
-                // 最後のSuzuストレステストが成否に応じたEditor終了コードを返す。
-                SatoHachiVerification.Verify();
-                SatoHachiInsightVerification.Verify();
-                NNNObservationBatchRunner.RunStressTest();
+                PresentationV02Verification.Run(c, () =>
+                {
+                    c.AutoAdvance = false; c.Restart();
+                    Check(pen.Moves == 0 && fragile.Moves == 0 && fragile.State == ScenePropState.Normal && Vector3.Distance(fragile.transform.position, fragile.RestMarker.position) < .05f, "Replay prop reset");
+                    SatoKotaVerification.Verify();
+                    SatoHachiVerification.Verify(); SatoHachiInsightVerification.Verify();
+                    NNNObservationBatchRunner.RunStressTest();
+                });
             }
             catch (Exception e) { Debug.LogException(e); SessionState.SetBool(Key, false); EditorApplication.Exit(1); }
         }

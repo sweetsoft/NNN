@@ -38,14 +38,17 @@ namespace NNN
             if (Gesture != null) gesturePosition = Gesture.localPosition;
         }
         /// <summary>
-        /// 前の動作・移動・向きを解除し、新しい仮モーションを先頭から始める。
+        /// 前の動作・移動を解除し、向きは保ったまま新しいモーションを先頭から始める。
         /// 移動も伴う場合は、この呼び出しのあとにMoveToを呼ぶ。逆順だと移動が解除される。
-        /// 動作の終了通知は持たず、次の指示やResetPoseまで同じモーションを継続する。
+        /// 仮モーションは次の指示まで継続する。スプライトの一回再生は素材Presenterへ委譲する。
         /// </summary>
         public void PlayAction(ActorMotion action, string actionId = null)
         {
+            var facing = Visual.localRotation;
+            bool flip = SpriteAnimation != null && SpriteAnimation.Renderer.flipX;
             ResetPose(); motion = action; started = Time.unscaledTime;
-            if (SpriteAnimation != null) SpriteAnimation.Play(actionId);
+            Visual.localRotation = facing;
+            if (SpriteAnimation != null) { SpriteAnimation.Play(actionId); SpriteAnimation.Renderer.flipX = flip; }
         }
         /// <summary>
         /// Markerの位置への移動を予約し、進行方向へ見た目を向ける。実際の位置更新はUpdateで行う。

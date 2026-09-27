@@ -18,6 +18,12 @@ namespace NNN.Editor
         public static void RunBatch()
         {
             SatoHachiPlayableSceneBuilder.CreateScene();
+            RunExistingBatch();
+        }
+        /// <summary>旧形式の保存済みSceneを再生成せず読み込み、移行属性とfallbackの互換性を検証する。</summary>
+        public static void RunExistingBatch()
+        {
+            EditorSceneManager.OpenScene(SatoHachiPlayableSceneBuilder.ScenePath);
             SessionState.SetBool(Key, true); EditorApplication.isPlaying = true;
         }
         private static void Tick()

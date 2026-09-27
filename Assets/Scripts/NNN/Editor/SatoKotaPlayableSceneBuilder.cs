@@ -86,13 +86,14 @@ namespace NNN.Editor
             pen.Id = "PEN"; pen.RestMarker = markers.Find("Pen_Desk");
             var fragile = Cube(home.transform, "Fragile Object", markers.Find("Object_Desk").position, new Vector3(.25f, .3f, .25f), white).gameObject.AddComponent<ObservationPropView>();
             fragile.Id = "FRAGILE"; fragile.RestMarker = markers.Find("Object_Desk");
-            // 人間が収納した事実を見たあと、翌日また机へ戻る矛盾を避ける。
-            // ペンは毎朝の作業用なので既定のResetEachDay=trueを使う。
-            fragile.ResetEachDay = false;
+            var cushion = spot.AddComponent<ObservationPropView>(); cushion.Id = "CAT_CUSHION";
             var human = Actor("HumanActor", false, teal, white, ink); var cat = Actor("CatActor", true, kota, white, ink);
             var action = new GameObject("ObservationView").AddComponent<ObservationActionPresenter>(); action.Definition = d; action.Human = human; action.Cat = cat;
             var presenter = action.gameObject.AddComponent<ObservationScenePresenter>(); presenter.Actions = action; presenter.Markers = markers;
             presenter.Home = home; presenter.ShoppingStreet = unusedBackground; presenter.Props.Add(pen); presenter.Props.Add(fragile);
+            presenter.Props.Add(cushion);
+            foreach (string id in new[] { "HOME_DAY", "HOME_EVENING", "HOME_NIGHT" })
+                presenter.Backgrounds.Add(new BackgroundVariantBinding { Id = id, Root = home });
             presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = K.Tower, Target = tower });
             presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = K.DeskSpot, Target = spot });
             presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = K.DeskCleared, Target = fragile.gameObject, HideWhenSet = true });
@@ -111,16 +112,18 @@ namespace NNN.Editor
         /// </summary>
         public static void FillDefinition(ObservationPresentationDefinition d)
         {
-            d.Actions.Clear(); d.Stages.Clear(); d.LogStages.Clear(); d.Information.Clear(); d.GuidedActions.Clear();
+            d.Actions.Clear(); d.Stages.Clear(); d.LogStages.Clear(); d.Information.Clear(); d.GuidedActions.Clear(); d.WorldPropSetups.Clear();
             d.CatName = "コタ"; d.HumanName = "佐藤"; d.SliceTitle = "SatoKota Vertical Slice"; d.GuidedActions.AddRange(K.GuidedActions);
             Bind(d, ActorMotion.Walk, "CAT_WALK", "CAT_RUN", "CAT_APPROACH", "CAT_ENTER_HOME", "CAT_EXPLORE");
             Bind(d, ActorMotion.Look, "CAT_LOOK", "CAT_SNIFF", "CAT_RUB", "HUMAN_LOOK");
             Bind(d, ActorMotion.Jump, "CAT_JUMP"); Bind(d, ActorMotion.Paw, "CAT_PAW", "CAT_PLAY", "HUMAN_PC", "HUMAN_PLAY");
             Bind(d, ActorMotion.Sit, "CAT_REST", "CAT_SIT"); Bind(d, ActorMotion.Eat, "CAT_EAT"); Bind(d, ActorMotion.Groom, "CAT_GROOM");
             Bind(d, ActorMotion.Crouch, "HUMAN_CROUCH"); Bind(d, ActorMotion.Place, "HUMAN_PLACE", "HUMAN_CLEAR_TABLE"); Bind(d, ActorMotion.Hold, "HUMAN_HOLD");
+            Bind(d, ActorMotion.Walk, "HUMAN_WALK", "CAT_FOLLOW"); Bind(d, ActorMotion.Jump, "CAT_JUMP_DOWN");
+            Bind(d, ActorMotion.Idle, "HUMAN_STAND_UP"); Bind(d, ActorMotion.Look, "HUMAN_REACT_SMALL");
             Stage(d, K.Contact, "Cat_Door", "Human_Door"); Step(d, K.Contact, 1, to: "Cat_NearHuman");
             Stage(d, K.Entry, "Cat_Door", "Human_Door"); Step(d, K.Entry, 0, to: "Cat_Default"); Step(d, K.Entry, 2, to: "Cat_OtherSide");
-            Stage(d, K.Living, "Cat_Bed"); Stage(d, K.DeskTrouble, "Cat_Default");
+            Stage(d, K.Living, "Cat_Bed"); Stage(d, K.DeskTrouble, "Cat_DeskFloor");
             Step(d, K.DeskTrouble, 1, to: "Cat_DeskFloor"); Step(d, K.DeskTrouble, 2, to: "Cat_Desk");
             Step(d, K.DeskTrouble, 3, at: "Cat_Desk", prop: "PEN", propTo: "Pen_Floor");
             Step(d, K.DeskTrouble, 4, at: "Cat_DeskFloor"); Step(d, K.DeskTrouble, 5, at: "Cat_Default", to: "Cat_DeskFloor");
@@ -136,6 +139,7 @@ namespace NNN.Editor
             Stage(d, K.DeskVisit, "Cat_DeskFloor", to: "Cat_Desk"); Stage(d, K.TowerJump, "Cat_Default", to: "Cat_Tower");
             Stage(d, "KOTA_NORMAL_NEAR_DESK", "Cat_Spot"); Stage(d, "KOTA_NORMAL_REST", "Cat_Bed");
             Stage(d, K.NightRun, "Cat_Default", to: "Cat_DeskFloor");
+            ConfigureIndependentScenes(d);
             string[] ids = { K.EveningKnowledge, K.PlayKnowledge, K.VerticalKnowledge, K.ExplorationKnowledge, K.ProximityKnowledge,
                 K.PlayRoutine, K.VerticalRoute, K.Tower, K.DeskSpot, K.DeskCleared };
             string[] labels = { "夕方～夜に活発", "遊びへの反応が強い", "高い場所を好んで使う", "部屋を巡回する傾向", "佐藤の近くで過ごす傾向",
@@ -145,9 +149,52 @@ namespace NNN.Editor
         private static void Bind(ObservationPresentationDefinition d, ActorMotion motion, params string[] actions)
         { foreach (string id in actions) d.Actions.Add(new ActionMotionBinding { ActionId = id, Motion = motion }); }
         private static void Stage(ObservationPresentationDefinition d, string id, string cat, string human = "Human_Default", string to = null)
-            => d.Stages.Add(new SceneStageBinding { EventId = id, CatMarker = cat, HumanMarker = human, CatDestination = to });
+            => d.Stages.Add(new SceneStageBinding { EventId = id, CatStartPoint = cat, HumanStartPoint = human, CatDestination = to });
         private static void Step(ObservationPresentationDefinition d, string id, int index, string at = null, string to = null, string human = null, string prop = null, string propTo = null)
-            => d.LogStages.Add(new LogStageBinding { EventId = id, LogIndex = index, CatMarker = at, CatDestination = to, HumanMarker = human, PropId = prop, PropDestination = propTo });
+            => d.LogStages.Add(new LogStageBinding { EventId = id, StepIndex = index, CatMarker = at, CatDestination = to, HumanMarker = human, PropId = prop, PropDestination = propTo });
+
+        private static void ConfigureIndependentScenes(ObservationPresentationDefinition d)
+        {
+            d.WorldPropSetups.Add(new ScenePropSetup { PropId = "FRAGILE", PointId = "Object_Storage", State = ScenePropState.Stored, RequiredWorldFlag = K.DeskCleared });
+            var desk = d.Stages.Find(x => x.EventId == K.DeskTrouble);
+            desk.BackgroundId = "HOME_EVENING"; desk.CatFacing = ActorFacing.Left;
+            desk.PropSetups.Add(new ScenePropSetup { PropId = "PEN", PointId = "Pen_Desk" });
+            SetSequence(d, K.DeskTrouble, 3, PenFall());
+            var shared = d.Stages.Find(x => x.EventId == K.SharedSpace);
+            shared.BackgroundId = "HOME_EVENING"; shared.CatStartPoint = "Cat_DeskFloor"; shared.CatFacing = ActorFacing.Left;
+            shared.PropSetups.Add(new ScenePropSetup { PropId = "PEN", PointId = "Pen_Desk" });
+            shared.PropSetups.Add(new ScenePropSetup { PropId = "FRAGILE", PointId = "Object_Storage", State = ScenePropState.Stored, RequiredWorldFlag = K.DeskCleared });
+            shared.PropSetups.Add(new ScenePropSetup { PropId = "CAT_CUSHION", RequiredWorldFlag = K.DeskSpot });
+            SetSequence(d, K.SharedSpace, 5, PenFall());
+            SetSequence(d, K.SharedSpace, 6, Act(ObservationActor.Human, "HUMAN_REACT_SMALL", null, 1.5f));
+            // Captionは元の二行を維持し、立つ→歩く、降りる→追うを各行内の二段階で見せる。
+            SetSequence(d, K.Proximity, 2,
+                Act(ObservationActor.Human, "HUMAN_STAND_UP", null, .35f),
+                Act(ObservationActor.Human, "HUMAN_WALK", "Human_OtherSide", 1.9f));
+            SetSequence(d, K.Proximity, 3,
+                Act(ObservationActor.Cat, "CAT_JUMP_DOWN", "Cat_DeskFloor", .8f),
+                Act(ObservationActor.Cat, "CAT_FOLLOW", "Cat_OtherSide", 1.1f));
+            SetSequence(d, K.HumanAdaptation, 0,
+                Act(ObservationActor.Human, "HUMAN_CLEAR_TABLE", null, .6f),
+                new PresentationStep { TargetPropId = "FRAGILE", TargetPointId = "Object_Storage", PropState = ScenePropState.Moved, DurationSeconds = .5f },
+                new PresentationStep { TargetPropId = "FRAGILE", PropState = ScenePropState.Stored, DurationSeconds = .4f });
+            d.Stages.Find(x => x.EventId == K.Night).BackgroundId = "HOME_NIGHT";
+        }
+        // DAY4とDAY11が同じ演出定義を生成する。落下は一時状態で、世界状態の効果は持たない。
+        private static PresentationStep[] PenFall() => new[] {
+            Act(ObservationActor.Cat, "CAT_PAW", null, .55f),
+            new PresentationStep { TargetPropId = "PEN", TargetPointId = "Pen_Floor", PropState = ScenePropState.Fallen, DurationSeconds = .65f },
+            Act(ObservationActor.Human, "HUMAN_REACT_SMALL", null, .3f) };
+        private static PresentationStep Act(ObservationActor actor, string action, string point, float seconds)
+            => new PresentationStep { Actor = actor, ActionId = action, TargetPointId = point, DurationSeconds = seconds };
+        private static void SetSequence(ObservationPresentationDefinition d, string eventId, int index, params PresentationStep[] steps)
+        {
+            var binding = d.FindStep(eventId, "", index);
+            if (binding == null) { binding = new LogStageBinding { EventId = eventId, StepIndex = index }; d.LogStages.Add(binding); }
+            // 新Sequenceには旧例外配置を重ねない。特にDAY9で歩く前に瞬間移動させない。
+            binding.CatMarker = binding.HumanMarker = binding.CatDestination = binding.PropId = binding.PropDestination = null;
+            binding.Steps.Clear(); binding.Steps.AddRange(steps);
+        }
         // 既存アセットを更新し、Sceneから参照するGUIDを再生成のたびに変えない。
         private static T Asset<T>(string name) where T : ScriptableObject
         {
