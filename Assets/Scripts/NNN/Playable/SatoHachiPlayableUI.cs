@@ -1,169 +1,223 @@
+using System;
 using System.Linq;
+using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace NNN
 {
-    /// <summary>Game View用の検証UI。Simulationの文章は変更せず、結果を一画面に配置する。</summary>
+    /// <summary>uGUIによる表示専用View。再生済みの観察とControllerの結果だけを表示する。</summary>
     public sealed class SatoHachiPlayableUI : MonoBehaviour
     {
         public SatoHachiPlayableController Controller;
         public Camera WorldCamera;
         public bool CaptionsVisible = true;
-        private Font font;
-        private GUIStyle text, small, title, button, card, toggle;
-        private readonly Color ink = new Color(0.12f, 0.2f, 0.22f);
-        private readonly Color paper = new Color(0.96f, 0.95f, 0.91f);
-        private void InitStyles()
+        public Canvas Canvas;
+        public RawImage ObservationImage;
+        public Text DayText, TimeText, LocationText, CaptionText, PhaseText, BodyText, DetailText, LogText, DebugText, ErrorText;
+        public Button NextButton, GuidedButton;
+        public Button[] ActionButtons;
+        public Toggle DebugToggle, AutoToggle, GuidedToggle, CaptionToggle;
+        public GameObject DebugPanel;
+        public ScrollRect LogScroll;
+        private Font runtimeFont;
+        private RenderTexture texture;
+        private RenderTexture previousTarget;
+        private Rect previousRect;
+        private readonly Vector3[] corners = new Vector3[4];
+        private string lastLog;
+
+        private void Awake()
         {
-            if (text != null) return;
-            font = Font.CreateDynamicFontFromOSFont(new[] { "Yu Gothic", "Meiryo", "Arial" }, 22);
-            text = new GUIStyle(GUI.skin.label) { font = font, fontSize = 22, wordWrap = true }; text.normal.textColor = ink;
-            text.hover.textColor = text.active.textColor = text.focused.textColor = ink;
-            text.onNormal.textColor = text.onHover.textColor = text.onActive.textColor = text.onFocused.textColor = ink;
-            small = new GUIStyle(text) { fontSize = 17 };
-            toggle = new GUIStyle(GUI.skin.toggle) { font = font, fontSize = 17 }; toggle.normal.textColor = ink; toggle.onNormal.textColor = ink;
-            toggle.hover.textColor = toggle.active.textColor = toggle.focused.textColor = ink;
-            toggle.onHover.textColor = toggle.onActive.textColor = toggle.onFocused.textColor = ink;
-            title = new GUIStyle(text) { fontSize = 32, fontStyle = FontStyle.Bold };
-            button = new GUIStyle(GUI.skin.button) { font = font, fontSize = 23, wordWrap = true };
-            card = new GUIStyle(button) { alignment = TextAnchor.MiddleLeft, fontSize = 17, padding = new RectOffset(16, 16, 6, 6) };
-        }
-        private void OnGUI()
-        {
-            if (Controller.Simulator == null) return;
-            InitStyles();
-            if (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Space || Event.current.keyCode == KeyCode.Return)) Event.current.Use();
-            float scale = Mathf.Min(Screen.width / 1280f, Screen.height / 900f);
-            float left = (Screen.width - 1280 * scale) / 2, top = (Screen.height - 900 * scale) / 2;
-            // The world camera only clears its viewport. Clear the surrounding UI every frame.
-            var previousColor = GUI.color; GUI.color = new Color(.08f, .12f, .14f);
-            float worldLeft = left + 24 * scale, worldTop = top + 90 * scale;
-            float worldRight = left + 1256 * scale, worldBottom = top + 420 * scale;
-            GUI.DrawTexture(new Rect(0, 0, Screen.width, worldTop), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(0, worldBottom, Screen.width, Screen.height - worldBottom), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(0, worldTop, worldLeft, worldBottom - worldTop), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(worldRight, worldTop, Screen.width - worldRight, worldBottom - worldTop), Texture2D.whiteTexture);
-            GUI.color = previousColor;
-            var old = GUI.matrix; GUI.matrix = Matrix4x4.TRS(new Vector3(left, top, 0), Quaternion.identity, Vector3.one * scale);
-            WorldCamera.rect = new Rect((left + 24 * scale) / Screen.width, 1 - (top + 420 * scale) / Screen.height, 1232 * scale / Screen.width, 330 * scale / Screen.height);
-            Panel(0, 0, 1280, 84); Label(28, 17, 560, 50, "DAY " + Controller.Day.ToString("00") + "  /  " + Controller.Definition.CatName, title);
-            Label(690, 28, 540, 36, "NNN   ·   OBSERVE / UNDERSTAND / ACT", small);
-            Label(45, 100, 800, 38, Controller.Presentation.BackgroundId == "SHOPPING_STREET" ? "商店街  /  SHOPPING STREET" : "佐藤宅  /  HOME", small);
-            Panel(24, 435, 1232, 94);
-            if (Controller.Phase == ObservationDayPhase.ActionSelection && !Controller.SliceComplete)
+            if (Canvas == null) PlayableUGUILayout.Build(this);
+            runtimeFont = Font.CreateDynamicFontFromOSFont(new[] { "Yu Gothic", "Meiryo", "Arial" }, 22);
+            foreach (var label in Canvas.GetComponentsInChildren<Text>(true)) label.font = runtimeFont;
+            NextButton.onClick.AddListener(() => { if (Controller.SliceComplete) Controller.Restart(); else Controller.Advance(); });
+            GuidedButton.onClick.AddListener(Controller.SelectGuided);
+            DebugToggle.onValueChanged.AddListener(value => Controller.DebugVisible = value);
+            AutoToggle.onValueChanged.AddListener(value => Controller.AutoAdvance = value);
+            GuidedToggle.onValueChanged.AddListener(value => Controller.GuidedMode = value);
+            CaptionToggle.onValueChanged.AddListener(value => CaptionsVisible = value);
+            for (int i = 0; i < ActionButtons.Length; i++)
             {
-                Label(44, 441, 1190, 26, "CURRENT QUESTION", small);
-                Label(44, 474, 1190, 48, Controller.Review?.CurrentQuestion, text);
+                int index = i;
+                ActionButtons[i].onClick.AddListener(() => SelectOption(index));
             }
-            else if (CaptionsVisible && !Controller.ReviewVisible) Label(44, 447, 1190, 74, Controller.Presentation.Caption, text);
-            Panel(24, 542, 1232, 298);
-            Panel(24, 847, 1232, 48);
+        }
+        private void OnEnable()
+        {
+            if (WorldCamera == null) return;
+            previousTarget = WorldCamera.targetTexture; previousRect = WorldCamera.rect;
+        }
+        private void OnDisable()
+        {
+            if (WorldCamera != null) { WorldCamera.targetTexture = previousTarget; WorldCamera.rect = previousRect; }
+            if (ObservationImage != null) ObservationImage.texture = null;
+            if (texture != null) { texture.Release(); Destroy(texture); texture = null; }
+        }
+        private void OnDestroy() { if (runtimeFont != null) Destroy(runtimeFont); }
+
+        private void LateUpdate()
+        {
+            UpdateCamera();
+            if (Controller == null || Controller.Simulator == null) return;
+            DayText.text = "DAY " + Controller.Day.ToString("00") + " / " + Controller.Definition.CatName;
+            LocationText.text = Controller.Presentation.BackgroundId == "SHOPPING_STREET" ? "商店街" : "佐藤宅";
+            UpdateLog();
+            CaptionText.text = CaptionsVisible && !Controller.ReviewVisible ? Controller.Presentation.Caption : "";
+            DebugToggle.SetIsOnWithoutNotify(Controller.DebugVisible);
+            AutoToggle.SetIsOnWithoutNotify(Controller.AutoAdvance);
+            GuidedToggle.SetIsOnWithoutNotify(Controller.GuidedMode);
+            CaptionToggle.SetIsOnWithoutNotify(CaptionsVisible);
+            DebugPanel.SetActive(Controller.DebugVisible);
+            UpdateDebug();
+            ErrorText.text = Controller.Error ?? "";
+            if (Controller.Phase != ObservationDayPhase.ActionSelection || Controller.SliceComplete)
+                foreach (var button in ActionButtons) button.gameObject.SetActive(false);
+            GuidedButton.gameObject.SetActive(Controller.GuidedMode && Controller.Phase == ObservationDayPhase.ActionSelection && !Controller.SliceComplete);
+            BodyText.text = DetailText.text = "";
+            NextButton.gameObject.SetActive(Controller.Phase != ObservationDayPhase.ActionSelection || Controller.SliceComplete);
+            NextButton.interactable = Controller.CanAdvance || Controller.SliceComplete;
+            string next = "NEXT";
             if (Controller.SliceComplete)
             {
-                Label(70, 580, 1150, 80, Controller.Definition.SliceTitle + " Complete", title);
-                if (GUI.Button(new Rect(900, 747, 300, 64), "もう一度プレイ", button)) Controller.Restart();
+                PhaseText.text = Controller.Definition.SliceTitle + " Complete";
+                next = "もう一度プレイ";
             }
             else if (Controller.Phase == ObservationDayPhase.Observing)
             {
-                Label(50, 565, 850, 50, Controller.SceneIndex < 0 ? "DAY START" : "OBSERVATION", title);
-                Label(50, 628, 800, 80, Controller.SceneIndex < 0 ? "今日の生活を観察します。" : "場面 " + (Controller.SceneIndex + 1) + " / " + Controller.Scenes.Count + "   ·   " + Controller.Presentation.LogIndex + " / " + Controller.Presentation.LogCount, text);
-                Label(50, 770, 790, 40, "NEXT / Space / Enter で次へ", small); NextButton("NEXT");
+                PhaseText.text = Controller.SceneIndex < 0 ? "DAY START" : "OBSERVATION";
+                BodyText.text = Controller.SceneIndex < 0 ? "今日の生活を観察します。" :
+                    "場面 " + (Controller.SceneIndex + 1) + " / " + Controller.Scenes.Count + "   ·   " + Controller.Presentation.LogIndex + " / " + Controller.Presentation.LogCount;
+                DetailText.text = "NEXT / Space / Enter で次へ";
+                if (Controller.Presentation.IsPlaying) next = "再生中…";
             }
-            else if (Controller.ReviewVisible) ReviewPanel();
+            else if (Controller.ReviewVisible)
+            {
+                PhaseText.text = "OBSERVATION UPDATE";
+                BodyText.text = string.Join("\n", Controller.Review.Updates.Select(x => "・" + x.Text));
+                DetailText.text = Controller.Review.Changes.Count == 0 ? "" : "CHANGE\n" + string.Join("\n", Controller.Review.Changes.Select(x => "・" + x.Text));
+                next = "CAT REPORT →";
+            }
             else if (Controller.Phase == ObservationDayPhase.CatReport)
             {
-                Label(50, 565, 1100, 50, "CAT REPORT   /   " + Controller.Definition.CatName, title);
-                Label(64, 635, 1050, 60, "「" + Controller.Simulator.DayContext.CatReport.Text + "」", title);
-                if (Controller.Simulator.ObservedKnowledgeTags.Count > 0)
-                    Label(64, 698, 780, 118, "観察で分かったこと\n" + string.Join("\n", Controller.Simulator.ObservedKnowledgeTags.Select(Controller.Definition.InformationText)), small);
-                NextButton("NNN ACTION →");
+                PhaseText.text = "CAT REPORT / " + Controller.Definition.CatName;
+                BodyText.text = "「" + Controller.Simulator.DayContext.CatReport.Text + "」";
+                DetailText.text = Controller.Simulator.ObservedKnowledgeTags.Count == 0 ? "" : "観察で分かったこと\n" +
+                    string.Join("\n", Controller.Simulator.ObservedKnowledgeTags.Select(Controller.Definition.InformationText));
+                next = "NNN ACTION →";
             }
-            else if (Controller.Phase == ObservationDayPhase.ActionSelection) ActionPanel();
-            else ResultPanel();
-            Controller.DebugVisible = GUI.Toggle(new Rect(30, 857, 190, 32), Controller.DebugVisible, " Debug [F1]", toggle);
-            if (Controller.GuidedMode && Controller.Phase == ObservationDayPhase.ActionSelection && !Controller.SliceComplete)
-                if (GUI.Button(new Rect(905, 851, 330, 40), "Guided選択 [G]", button)) Controller.SelectGuided();
-            if (Controller.DebugVisible) DebugPanel();
-            if (!string.IsNullOrEmpty(Controller.Error)) Label(300, 850, 600, 40, Controller.Error, small);
-            GUI.matrix = old;
-        }
-        private void ActionPanel()
-        {
-            Label(50, 550, 1100, 42, "NNN ACTION   /   今日はひとつ", title);
-            var visible = Controller.Options.Where(x => x.Visibility != NNNActionVisibility.Hidden).ToList();
-            for (int i = 0; i < visible.Count; i++)
+            else if (Controller.Phase == ObservationDayPhase.ActionSelection) ShowActions();
+            else
             {
-                var option = visible[i];
+                ShowResult();
+                next = Controller.Day == 11 ? "COMPLETE" : "NEXT DAY →";
+            }
+            NextButton.GetComponentInChildren<Text>().text = next;
+        }
+
+        // CameraはRawImageの中へ描画する。Size/位置はSceneのCamera設定をそのまま使う。
+        private void UpdateCamera()
+        {
+            if (WorldCamera == null || ObservationImage == null || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return;
+            ObservationImage.rectTransform.GetWorldCorners(corners);
+            int width = Mathf.Clamp(Mathf.RoundToInt(Vector3.Distance(corners[0], corners[3])), 16, 4096);
+            int height = Mathf.Clamp(Mathf.RoundToInt(Vector3.Distance(corners[0], corners[1])), 16, 4096);
+            if (texture == null || texture.width != width || texture.height != height)
+            {
+                if (texture != null) { WorldCamera.targetTexture = null; texture.Release(); Destroy(texture); }
+                texture = new RenderTexture(width, height, 24) { name = "Observation View", antiAliasing = 1 };
+                texture.Create(); ObservationImage.texture = texture;
+            }
+            WorldCamera.targetTexture = texture;
+            WorldCamera.rect = new Rect(0, 0, 1, 1);
+        }
+        private void UpdateLog()
+        {
+            var body = new StringBuilder();
+            float? time = null;
+            // Simulatorは一日分を先に生成するため、その全ログを直接表示しない。
+            for (int i = 0; i <= Controller.SceneIndex && i < Controller.Scenes.Count; i++)
+            {
+                var scene = Controller.Scenes[i];
+                int count = i < Controller.SceneIndex ? scene.Logs.Count : Math.Min(Controller.Presentation.LogIndex, scene.Logs.Count);
+                for (int j = 0; j < count; j++)
+                {
+                    var log = scene.Logs[j]; time = log.Time;
+                    body.Append(Clock(log.Time)).Append("  ").Append(log.Actor == ObservationActor.Human ? Controller.Definition.HumanName : Controller.Definition.CatName)
+                        .Append('\n').Append(log.Text).Append("\n\n");
+                }
+            }
+            if (Controller.SelectedAction != null) body.Append("NNN ACTION\n").Append(Controller.SelectedAction.DisplayName);
+            string value = body.Length == 0 ? "観察を始めると、ここに行動が記録されます。" : body.ToString();
+            TimeText.text = "時間  " + (time.HasValue ? Clock(time.Value) : "--:--");
+            if (value == lastLog) return;
+            lastLog = value; LogText.text = value;
+            UnityEngine.Canvas.ForceUpdateCanvases(); LogScroll.verticalNormalizedPosition = 0;
+        }
+        private static string Clock(float hours)
+        {
+            int minutes = Mathf.RoundToInt(hours * 60);
+            return (minutes / 60).ToString("00") + ":" + (minutes % 60).ToString("00");
+        }
+        private void SelectOption(int index)
+        {
+            if (Controller.Options == null) return;
+            var options = Controller.Options.Where(x => x.Visibility != NNNActionVisibility.Hidden).ToList();
+            if (index < options.Count && options[index].IsAvailable) Controller.SelectAction(options[index].Definition.Id);
+        }
+        private void ShowActions()
+        {
+            PhaseText.text = "NNN ACTION / 今日はひとつ";
+            CaptionText.text = "CURRENT QUESTION   " + Controller.Review?.CurrentQuestion;
+            var options = Controller.Options.Where(x => x.Visibility != NNNActionVisibility.Hidden).ToList();
+            for (int i = 0; i < ActionButtons.Length; i++)
+            {
+                var button = ActionButtons[i];
+                button.gameObject.SetActive(i < options.Count);
+                if (i >= options.Count) continue;
+                var option = options[i];
+                button.gameObject.SetActive(true); button.interactable = option.IsAvailable;
                 string kind = option.Definition.Kind == NNNActionKind.Investigation ? "INVESTIGATION / 調査" : option.Definition.Kind == NNNActionKind.Operation ? "OPERATION / 工作" : "SKIP";
-                string body = kind + "\n" + option.Definition.DisplayName;
-                if (option.Definition.Kind != NNNActionKind.Skip)
-                    body += "\n" + (option.Definition.Kind == NNNActionKind.Investigation ? "確かめる：" : "試す：") + option.Definition.IntentText;
-                if (!option.IsAvailable) body += "\nLOCKED · " + Friendly(option.UnavailableReason);
-                GUI.enabled = option.IsAvailable;
-                GUI.backgroundColor = option.Definition.Kind == NNNActionKind.Investigation ? new Color(.55f, .88f, .83f) : new Color(.96f, .81f, .52f);
-                if (GUI.Button(new Rect(48 + (i % 2) * 600, 596 + (i / 2) * 120, 582, 114), body, card)) Controller.SelectAction(option.Definition.Id);
-                GUI.enabled = true; GUI.backgroundColor = Color.white;
+                string value = kind + "\n" + option.Definition.DisplayName;
+                if (option.Definition.Kind != NNNActionKind.Skip) value += "\n" + option.Definition.IntentText;
+                if (!option.IsAvailable) value += "\nLOCKED · " + Friendly(option.UnavailableReason);
+                button.GetComponentInChildren<Text>().text = value;
+                button.image.color = option.Definition.Kind == NNNActionKind.Investigation ? new Color(.78f, .9f, .89f) : new Color(.96f, .89f, .73f);
             }
         }
-        private void ReviewPanel()
-        {
-            Label(50, 552, 1100, 36, "OBSERVATION UPDATE", text);
-            Label(50, 594, 1160, 98, string.Join("\n", Controller.Review.Updates.Select(x => "・" + x.Text)), text);
-            if (Controller.Review.Changes.Count > 0)
-            {
-                Label(50, 700, 1100, 30, "CHANGE", small);
-                Label(50, 732, 1160, 94, string.Join("\n", Controller.Review.Changes.Select(x => x.Text)), text);
-            }
-            if (GUI.Button(new Rect(945, 851, 290, 40), "CAT REPORT →", button)) Controller.Advance();
-        }
-        private void ResultPanel()
+        private void ShowResult()
         {
             if (Controller.Investigation != null)
             {
                 var result = Controller.Investigation;
-                Label(50, 550, 1170, 44, "調査結果  /  " + Controller.SelectedAction.DisplayName, text);
-                Label(50, 603, 705, 190, result.ResultText, text);
-                Label(795, 600, 425, 28, "NEW INFORMATION", small);
-                Label(795, 632, 425, 94, string.Join("\n", result.AddedKnowledgeTags.Select(x => "・" + Controller.Definition.InformationText(x))), small);
-                var discovered = result.NewlyDiscoveredOperationIds.Union(result.NewlyUnlockedOperationIds).Select(id => Controller.Route.Actions.Single(x => x.Id == id).DisplayName);
-                Label(795, 726, 425, 76, "NEW OPERATION\n" + (discovered.Any() ? string.Join(" / ", discovered) : "今回の新規発見はありません"), small);
+                PhaseText.text = "調査結果 / " + Controller.SelectedAction.DisplayName;
+                BodyText.text = result.ResultText;
+                var operations = result.NewlyDiscoveredOperationIds.Union(result.NewlyUnlockedOperationIds).Select(id => Controller.Route.Actions.Single(x => x.Id == id).DisplayName).ToList();
+                DetailText.text = "NEW INFORMATION\n" + string.Join("\n", result.AddedKnowledgeTags.Select(x => "・" + Controller.Definition.InformationText(x))) +
+                    "\n\nNEW OPERATION\n" + (operations.Count > 0 ? string.Join(" / ", operations) : "今回の新規発見はありません");
             }
             else
             {
-                Label(50, 565, 1100, 45, Controller.SelectedAction.Kind == NNNActionKind.Operation ? "NNN OPERATION" : "SKIP", title);
-                Label(50, 632, 1100, 108, Controller.SelectedAction.Kind == NNNActionKind.Operation
-                    ? "次の工作を手配しました。\n「" + Controller.SelectedAction.DisplayName + "」\n効果は翌日以降に現れます。"
-                    : "今日は手を加えず、様子を見ます。", text);
+                bool operation = Controller.SelectedAction.Kind == NNNActionKind.Operation;
+                PhaseText.text = operation ? "NNN OPERATION" : "SKIP";
+                BodyText.text = operation ? "次の工作を手配しました。\n「" + Controller.SelectedAction.DisplayName + "」\n効果は翌日以降に現れます。" : "今日は手を加えず、様子を見ます。";
             }
-            // 結果本文の読書領域を避けて、常に同じ位置へ置く。
-            GUI.enabled = Controller.CanAdvance;
-            if (GUI.Button(new Rect(945, 847, 290, 42), Controller.Day == 11 ? "COMPLETE" : "NEXT DAY →", button)) Controller.Advance();
-            GUI.enabled = true;
-        }
-        private void NextButton(string label)
-        {
-            GUI.enabled = Controller.CanAdvance;
-            if (GUI.Button(new Rect(900, 747, 300, 64), Controller.Presentation.IsPlaying ? "再生中…" : label, button)) Controller.Advance();
-            GUI.enabled = true;
         }
         private string Friendly(string value)
-        { foreach (var label in Controller.Definition.Information) value = value.Replace(label.Id, label.Label); return value; }
-        private void DebugPanel()
         {
-            Panel(460, 90, 790, 448);
-            Controller.AutoAdvance = GUI.Toggle(new Rect(700, 106, 250, 28), Controller.AutoAdvance, "Auto Advance (debug)", toggle);
-            Controller.GuidedMode = GUI.Toggle(new Rect(700, 140, 250, 28), Controller.GuidedMode, "Guided [G]", toggle);
-            CaptionsVisible = GUI.Toggle(new Rect(990, 106, 240, 28), CaptionsVisible, "Caption", toggle);
-            Label(700, 177, 520, 32, "DAY " + Controller.Day + " / " + Controller.Phase + " / " + Controller.Presentation.EventId, small);
-            Label(700, 211, 520, 120, Controller.Simulator.State.Relationship + "\nKnowledge: " + Controller.Simulator.State.PlayerKnowledgeFlags.Count + " / World: " + string.Join(", ", Controller.Simulator.State.WorldFlags), new GUIStyle(small) { fontSize = 14 });
-            Label(700, 337, 520, 68, "Days played: " + Controller.Measurements.Count + " / TOTAL " + Controller.Measurements.Sum(x => x.Seconds).ToString("F1") + " sec\nInvestigations: " + Controller.Simulator.State.PlayerActionHistory.Count(x => x.ActionId.StartsWith("INVESTIGATE")) + " / Operations: " + Controller.Simulator.State.PlayerActionHistory.Count(x => x.ActionId.StartsWith("OP_")), small);
-            if (Controller.Review != null)
-                Label(475, 409, 760, 128, "Insight: " + Controller.Review.SelectedInsightId + " / Question: " + Controller.Review.CurrentQuestionId
-                    + "\nUpdate sources: " + string.Join("; ", Controller.Review.Updates.Select(Controller.Review.Source))
-                    + "\nChange sources: " + string.Join("; ", Controller.Review.Changes.Select(Controller.Review.Source)), new GUIStyle(small) { fontSize = 12 });
+            foreach (var label in Controller.Definition.Information) value = value.Replace(label.Id, label.Label);
+            return value;
         }
-        private void Panel(float x, float y, float w, float h)
-        { var old = GUI.color; GUI.color = paper; GUI.DrawTexture(new Rect(x, y, w, h), Texture2D.whiteTexture); GUI.color = old; }
-        private void Label(float x, float y, float w, float h, string value, GUIStyle style) => GUI.Label(new Rect(x, y, w, h), value, style);
+        private void UpdateDebug()
+        {
+            if (!Controller.DebugVisible) return;
+            var state = Controller.Simulator.State;
+            DebugText.text = "DAY " + Controller.Day + " / " + Controller.Phase + "\nEvent: " + Controller.Presentation.EventId +
+                "\nScene: " + Controller.Presentation.SceneId + "\n\n" + state.Relationship +
+                "\n\nKnowledge\n" + string.Join("\n", state.PlayerKnowledgeFlags) + "\n\nWorld Flags\n" + string.Join("\n", state.WorldFlags) +
+                "\n\nDays played: " + Controller.Measurements.Count + "\nTOTAL: " + Controller.Measurements.Sum(x => x.Seconds).ToString("F1") + " sec" +
+                (Controller.Review == null ? "" : "\n\nInsight: " + Controller.Review.SelectedInsightId + "\nQuestion: " + Controller.Review.CurrentQuestionId);
+        }
     }
 }

@@ -99,7 +99,7 @@ namespace NNN.Editor
             presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = K.DeskCleared, Target = fragile.gameObject, HideWhenSet = true });
             var controller = new GameObject("GameController").AddComponent<SatoHachiPlayableController>();
             controller.Content = content; controller.Definition = d; controller.Presentation = presenter;
-            var ui = new GameObject("UI - Observation Review Report Action Result").AddComponent<SatoHachiPlayableUI>(); ui.Controller = controller; ui.WorldCamera = camera;
+            var ui = new GameObject("UI - Observation Review Report Action Result").AddComponent<SatoHachiPlayableUI>(); ui.Controller = controller; ui.WorldCamera = camera; PlayableUGUILayout.Build(ui);
             EditorUtility.SetDirty(d); AssetDatabase.SaveAssets(); EditorSceneManager.SaveScene(scene, KotaScenePath);
             // 起動Sceneはコタ。既存のテストScene登録は保持する。
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(KotaScenePath, true) }

@@ -70,7 +70,7 @@ namespace NNN.Editor
             foreach (string prop in new[] { "TowerPost", "TowerTop" }) presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = H.Tower, Target = home.transform.Find(prop).gameObject });
             foreach (string prop in new[] { "Carrier", "CarrierDoor" }) presenter.WorldProps.Add(new WorldVisibilityBinding { Flag = H.Carrier, Target = home.transform.Find(prop).gameObject });
             var controller = new GameObject("GameController").AddComponent<SatoHachiPlayableController>(); controller.Definition = definition; controller.Presentation = presenter;
-            var ui = new GameObject("UI - Day Caption CatReport Action Result NextDay").AddComponent<SatoHachiPlayableUI>(); ui.Controller = controller; ui.WorldCamera = camera;
+            var ui = new GameObject("UI - Day Caption CatReport Action Result NextDay").AddComponent<SatoHachiPlayableUI>(); ui.Controller = controller; ui.WorldCamera = camera; PlayableUGUILayout.Build(ui);
             AssetDatabase.SaveAssets(); EditorSceneManager.SaveScene(scene, ScenePath); AssetDatabase.Refresh();
             Debug.Log("Playable Scene created: " + ScenePath);
         }
