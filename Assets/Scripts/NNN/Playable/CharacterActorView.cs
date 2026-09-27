@@ -52,7 +52,7 @@ namespace NNN
             ResetPose(); motion = action; started = Time.unscaledTime;
             Visual.localRotation = facing;
             if (SpriteAnimation != null) { SpriteAnimation.Play(actionId); SpriteAnimation.Renderer.flipX = flip; }
-            if (ModelAnimation != null) { ModelAnimation.Play(actionId); ModelAnimation.transform.localRotation = modelFacing; }
+            if (ModelAnimation != null) { ModelAnimation.transform.localRotation = modelFacing; ModelAnimation.Play(actionId); }
         }
         /// <summary>
         /// Markerの位置への移動を予約し、進行方向へ見た目を向ける。実際の位置更新はUpdateで行う。

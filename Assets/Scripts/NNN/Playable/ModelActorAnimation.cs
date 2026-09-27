@@ -7,7 +7,13 @@ namespace NNN
     /// <summary>SteppedAnimatorのMasterのステートへActionを接続する。移動とSimulationは担当しない。</summary>
     public sealed class ModelActorAnimation : MonoBehaviour
     {
-        [Serializable] public sealed class ActionState { public string ActionId; public string State; }
+        [Serializable] public sealed class ActionState
+        {
+            public string ActionId;
+            public string State;
+            public bool OverrideFacing;
+            public Vector3 FacingEuler;
+        }
         public SteppedAnimator Stepped;
         public string IdleState = "HUMAN_IDLE_STAND";
         public Vector3 DefaultEuler = new Vector3(0, 180, 0);
@@ -19,7 +25,10 @@ namespace NNN
         {
             var master = MasterAnimator;
             if (master == null) return;
-            string state = Actions.Find(x => x.ActionId == actionId)?.State ?? actionId;
+            var binding = Actions.Find(x => x.ActionId == actionId);
+            string state = binding?.State ?? actionId;
+            // 机などに向きを合わせるActionは、前の姿勢より定義された向きを優先する。
+            if (binding != null && binding.OverrideFacing) transform.localRotation = Quaternion.Euler(binding.FacingEuler);
             if (string.IsNullOrEmpty(state) || !master.HasState(0, Animator.StringToHash(state))) state = IdleState;
             CurrentState = state;
             // MasterだけにPlayを送ると服や髪が旧ステートに残る。既存APIでMasterを含む全パーツへ送る。

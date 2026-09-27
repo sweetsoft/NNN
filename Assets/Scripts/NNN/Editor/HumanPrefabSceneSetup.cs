@@ -44,6 +44,9 @@ namespace NNN.Editor
             foreach (var id in new[] { "HUMAN_PLACE", "HUMAN_CLEAR_TABLE", "HUMAN_HOLD" })
                 model.Actions.Add(new ModelActorAnimation.ActionState { ActionId = id, State = "HUMAN_PICKUP" });
             model.Actions.Add(new ModelActorAnimation.ActionState { ActionId = "HUMAN_PLAY", State = "HUMAN_PET" });
+            // PC作業は画面奥（+Z）を向き、カメラへ背中を見せる。
+            model.Actions.Add(new ModelActorAnimation.ActionState {
+                ActionId = "HUMAN_PC", State = "HUMAN_PC", OverrideFacing = true, FacingEuler = Vector3.zero });
             // 未提供ActionはModelActorAnimationの立ちIdleへフォールバックする。
             actor.ModelAnimation = model;
             actor.Head = null; actor.Gesture = null; actor.SpriteAnimation = null;

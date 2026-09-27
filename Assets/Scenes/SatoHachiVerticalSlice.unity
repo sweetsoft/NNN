@@ -590,6 +590,10 @@ MonoBehaviour:
     State: HUMAN_PICKUP
   - ActionId: HUMAN_PLAY
     State: HUMAN_PET
+  - ActionId: HUMAN_PC
+    State: HUMAN_PC
+    OverrideFacing: 1
+    FacingEuler: {x: 0, y: 0, z: 0}
 --- !u!1 &247620225
 GameObject:
   m_ObjectHideFlags: 0

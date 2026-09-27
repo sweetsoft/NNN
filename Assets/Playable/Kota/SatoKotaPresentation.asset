@@ -69,148 +69,148 @@ MonoBehaviour:
     Motion: 2
   Stages:
   - EventId: KOTA_FIRST_CONTACT
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Door
     HumanFacing: 0
     CatStartPoint: Cat_Door
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_ENTER_HOME
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Door
     HumanFacing: 0
     CatStartPoint: Cat_Door
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_START_COHABITATION
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Bed
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     BackgroundId: HOME_EVENING
-    HumanStartPoint: Human_Default
+    HumanStartPoint: Human_PCDesk
     HumanFacing: 0
     CatStartPoint: Cat_DeskFloor
     CatFacing: 1
-    CatDestination:
+    CatDestination: 
     PropSetups:
     - PropId: PEN
       PointId: Pen_Desk
       State: 0
       Visible: 1
-      RequiredWorldFlag:
-    EventCgId:
+      RequiredWorldFlag: 
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_EVENING_PLAY
-    SceneId:
+    SceneId: 
     BackgroundId: HOME_NIGHT
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Default
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_PLAY_ROUTINE_RESPONSE
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Default
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_VERTICAL_EXPLORATION
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Default
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Default
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_FOLLOW_HUMAN
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Desk
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_DeskFloor
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     BackgroundId: HOME_EVENING
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_DeskFloor
     CatFacing: 1
-    CatDestination:
+    CatDestination: 
     PropSetups:
     - PropId: PEN
       PointId: Pen_Desk
       State: 0
       Visible: 1
-      RequiredWorldFlag:
+      RequiredWorldFlag: 
     - PropId: FRAGILE
       PointId: Object_Storage
       State: 4
       Visible: 1
       RequiredWorldFlag: FRAGILE_DESK_OBJECTS_STORED
     - PropId: CAT_CUSHION
-      PointId:
+      PointId: 
       State: 0
       Visible: 1
       RequiredWorldFlag: DESK_SIDE_CAT_SPOT_AVAILABLE
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_NORMAL_DESK_VISIT
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
@@ -218,10 +218,10 @@ MonoBehaviour:
     CatFacing: 0
     CatDestination: Cat_Desk
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_NORMAL_TOWER_JUMP
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
@@ -229,32 +229,32 @@ MonoBehaviour:
     CatFacing: 0
     CatDestination: Cat_Tower
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_NORMAL_NEAR_DESK
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Spot
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_NORMAL_REST
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
     CatStartPoint: Cat_Bed
     CatFacing: 0
-    CatDestination:
+    CatDestination: 
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   - EventId: KOTA_NORMAL_NIGHT_RUN
-    SceneId:
+    SceneId: 
     BackgroundId: HOME
     HumanStartPoint: Human_Default
     HumanFacing: 0
@@ -262,7 +262,7 @@ MonoBehaviour:
     CatFacing: 0
     CatDestination: Cat_DeskFloor
     PropSetups: []
-    EventCgId:
+    EventCgId: 
     TriggerStep: -1
   Information:
   - Id: KNOW_KOTA_HIGH_EVENING_ACTIVITY
@@ -287,341 +287,341 @@ MonoBehaviour:
     Label: "\u58CA\u308C\u3084\u3059\u3044\u5C0F\u7269\u3092\u53CE\u7D0D"
   LogStages:
   - EventId: KOTA_FIRST_CONTACT
-    SceneId:
+    SceneId: 
     StepIndex: 1
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_NearHuman
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ENTER_HOME
-    SceneId:
+    SceneId: 
     StepIndex: 0
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Default
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ENTER_HOME
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_OtherSide
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     StepIndex: 1
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_DeskFloor
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Desk
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     StepIndex: 3
     Steps:
     - Actor: 1
       ActionId: CAT_PAW
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.55
     - Actor: 0
-      ActionId:
+      ActionId: 
       TargetPointId: Pen_Floor
       TargetPropId: PEN
       PropState: 2
       DurationSeconds: 0.65
     - Actor: 0
       ActionId: HUMAN_REACT_SMALL
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.3
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     StepIndex: 4
     Steps: []
     CatMarker: Cat_DeskFloor
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_DESK_INTERRUPTION
-    SceneId:
+    SceneId: 
     StepIndex: 5
     Steps: []
     CatMarker: Cat_Default
     CatDestination: Cat_DeskFloor
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_EVENING_PLAY
-    SceneId:
+    SceneId: 
     StepIndex: 0
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_OtherSide
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_EVENING_PLAY
-    SceneId:
+    SceneId: 
     StepIndex: 1
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Shelf
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_EVENING_PLAY
-    SceneId:
+    SceneId: 
     StepIndex: 3
     Steps: []
     CatMarker: Cat_Default
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_PLAY_ROUTINE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_DeskFloor
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_PLAY_ROUTINE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 4
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Desk
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_VERTICAL_EXPLORATION
-    SceneId:
+    SceneId: 
     StepIndex: 0
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Shelf
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_VERTICAL_EXPLORATION
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
     CatMarker: Cat_Default
     CatDestination: Cat_DeskFloor
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 0
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Tower
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 1
     Steps: []
     CatMarker: Cat_Tower
     CatDestination: Cat_Window
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 3
     Steps: []
     CatMarker: Cat_DeskFloor
     CatDestination: Cat_Desk
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_ALLOWED_ROUTE_RESPONSE
-    SceneId:
+    SceneId: 
     StepIndex: 4
     Steps: []
     CatMarker: Cat_Desk
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_FOLLOW_HUMAN
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps:
     - Actor: 0
       ActionId: HUMAN_STAND_UP
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.35
     - Actor: 0
       ActionId: HUMAN_WALK
       TargetPointId: Human_OtherSide
-      TargetPropId:
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 1.9
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_FOLLOW_HUMAN
-    SceneId:
+    SceneId: 
     StepIndex: 3
     Steps:
     - Actor: 1
       ActionId: CAT_JUMP_DOWN
       TargetPointId: Cat_DeskFloor
-      TargetPropId:
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.8
     - Actor: 1
       ActionId: CAT_FOLLOW
       TargetPointId: Cat_OtherSide
-      TargetPropId:
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 1.1
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
-    SceneId:
+    SceneId: 
     StepIndex: 0
     Steps:
     - Actor: 0
       ActionId: HUMAN_CLEAR_TABLE
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.6
     - Actor: 0
-      ActionId:
+      ActionId: 
       TargetPointId: Object_Storage
       TargetPropId: FRAGILE
       PropState: 1
       DurationSeconds: 0.5
     - Actor: 0
-      ActionId:
-      TargetPointId:
+      ActionId: 
+      TargetPointId: 
       TargetPropId: FRAGILE
       PropState: 4
       DurationSeconds: 0.4
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_HUMAN_ADAPT_ENVIRONMENT
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
     CatMarker: Cat_Default
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     StepIndex: 1
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_DeskFloor
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     StepIndex: 2
     Steps: []
-    CatMarker:
+    CatMarker: 
     CatDestination: Cat_Spot
-    HumanMarker:
-    PropId:
-    PropDestination:
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     StepIndex: 3
     Steps: []
     CatMarker: Cat_Spot
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     StepIndex: 5
     Steps:
     - Actor: 1
       ActionId: CAT_PAW
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.55
     - Actor: 0
-      ActionId:
+      ActionId: 
       TargetPointId: Pen_Floor
       TargetPropId: PEN
       PropState: 2
       DurationSeconds: 0.65
     - Actor: 0
       ActionId: HUMAN_REACT_SMALL
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 0.3
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   - EventId: KOTA_SHARED_DESK_SPACE
-    SceneId:
+    SceneId: 
     StepIndex: 6
     Steps:
     - Actor: 0
       ActionId: HUMAN_REACT_SMALL
-      TargetPointId:
-      TargetPropId:
+      TargetPointId: 
+      TargetPropId: 
       PropState: 1
       DurationSeconds: 1.5
-    CatMarker:
-    CatDestination:
-    HumanMarker:
-    PropId:
-    PropDestination:
+    CatMarker: 
+    CatDestination: 
+    HumanMarker: 
+    PropId: 
+    PropDestination: 
   WorldPropSetups:
   - PropId: FRAGILE
     PointId: Object_Storage
