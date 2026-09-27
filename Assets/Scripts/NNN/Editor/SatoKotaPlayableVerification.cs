@@ -19,6 +19,7 @@ namespace NNN.Editor
         // staticコンストラクタがEditorの更新へ再接続し、Tick内でControllerの初期化を待つ。
         private const string Key = "NNN.KotaPlayableVerification";
         private static double deadline;
+        private static readonly System.Collections.Generic.HashSet<Sprite> idleFrames = new System.Collections.Generic.HashSet<Sprite>();
         static SatoKotaPlayableVerification() { EditorApplication.update += Tick; }
         /// <summary>Scene生成は別の検証入口が担当する。ここでは保存済みSceneの参照切れも検出する。</summary>
         public static void RunBatch()
@@ -35,6 +36,9 @@ namespace NNN.Editor
                 Check(EditorApplication.timeSinceStartup < deadline, "Kota playable timeout");
                 var c = UnityEngine.Object.FindFirstObjectByType<SatoHachiPlayableController>();
                 if (c == null || c.Simulator == null) return;
+                var sprite = c.Presentation.Actions.Cat.SpriteAnimation;
+                Check(sprite != null && sprite.Renderer != null && sprite.Renderer.sprite != null, "Cat sprite references");
+                if (sprite.CurrentClip == sprite.Idle) idleFrames.Add(sprite.Renderer.sprite);
                 c.AutoAdvance = true;
                 Check(c.Route.Cat.Id == "CAT_KOTA" && c.Definition.CatName == "コタ", "Wrong demo content");
                 Check(c.Presentation.BackgroundId == "HOME", "Outdoor background");
@@ -42,6 +46,48 @@ namespace NNN.Editor
                 foreach (var prop in c.Presentation.WorldProps)
                     Check(prop.Target.activeSelf == (c.Simulator.State.WorldFlags.Contains(prop.Flag) != prop.HideWhenSet), "World prop visibility");
                 if (!c.SliceComplete) return;
+                Check(idleFrames.Count > 1, "Idle sprite frames must advance during Play Mode");
+                var actor = c.Presentation.Actions.Cat;
+                foreach (var pair in new[] {
+                    new[] { "CAT_SIT", "ANIM_SIT" }, new[] { "CAT_REST", "ANIM_REST" },
+                    new[] { "CAT_WALK", "ANIM_WALK" }, new[] { "CAT_APPROACH", "ANIM_WALK" },
+                    new[] { "CAT_ENTER_HOME", "ANIM_WALK" }, new[] { "CAT_EXPLORE", "ANIM_WALK" },
+                    new[] { "HARNESS_LOW_WALK", "ANIM_WALK" }, new[] { "CAT_RUN", "ANIM_RUN" },
+                    new[] { "CAT_PAW", "ANIM_PAW" }, new[] { "CAT_PLAY", "ANIM_PAW" },
+                    new[] { "CAT_RUB", "ANIM_RUB" }, new[] { "CAT_SLEEP", "ANIM_SLEEP" },
+                    new[] { "CAT_JUMP", "ANIM_JUMP_UP" }, new[] { "CAT_JUMP_DOWN", "ANIM_JUMP_DOWN" },
+                    new[] { "CAT_DRINK", "ANIM_DRINK" },
+                    new[] { "UNKNOWN", "ANIM_IDLE" } })
+                {
+                    actor.PlayAction(ActorMotion.Sit, pair[0]);
+                    Check(sprite.CurrentClip.name == pair[1] && sprite.Renderer.sprite.texture.name == pair[1], "Cat clip mapping " + pair[0]);
+                    if (pair[1] != "ANIM_REST")
+                    {
+                        var first = sprite.Renderer.sprite;
+                        sprite.Animator.Update(.25f);
+                        Check(sprite.Renderer.sprite != first, "Sprite frames advance: " + pair[0]);
+                    }
+                }
+                actor.Face(Vector3.right); Check(sprite.Renderer.flipX, "Sprite faces right");
+                actor.Face(Vector3.left); Check(!sprite.Renderer.flipX, "Sprite faces left");
+                actor.ResetPose(); Check(sprite.CurrentClip == sprite.Idle && !sprite.Renderer.flipX, "Sprite reset");
+                Check(sprite.Actions.All(x => x.Clip.name.StartsWith("ANIM_")) && sprite.Idle.name == "ANIM_IDLE", "Confirmed clips only");
+                foreach (string id in new[] { "CAT_JUMP", "CAT_JUMP_DOWN" })
+                {
+                    sprite.Play(id); sprite.Animator.Update(sprite.CurrentClip.length + .1f);
+                    sprite.SendMessage("LateUpdate");
+                    Check(sprite.CurrentClip == sprite.Idle, "One-shot jump returns to idle: " + id);
+                }
+                var target = new GameObject("Jump verification marker").transform;
+                var jumpLog = new ObservationLogEntry { Actor = ObservationActor.Cat, ActionId = "CAT_JUMP" };
+                target.position = actor.transform.position + Vector3.down;
+                c.Presentation.Actions.Play(jumpLog, target);
+                Check(sprite.CurrentClip.name == "ANIM_JUMP_DOWN", "Descending marker selects jump down");
+                target.position = actor.transform.position + Vector3.up;
+                c.Presentation.Actions.Play(jumpLog, target);
+                Check(sprite.CurrentClip.name == "ANIM_JUMP_UP", "Ascending marker selects jump");
+                actor.ResetPose(); UnityEngine.Object.Destroy(target.gameObject);
+                Debug.Log("CAT SPRITES: PASS / all 11 clips including DRINK / animated frames / one-shot jumps / height selection / fallback / facing / reset.");
                 Check(c.Measurements.Count == 11 && c.Reviews.Count == 11 && c.Measurements.All(x => x.Scenes > 0 && x.Seconds > 0), "Playable completion/telemetry");
                 Check(c.Measurements.All(x => x.Clicks == x.Scenes + 5), "Shared input flow");
                 // Viewを通さない日次実行と照合し、アニメーションやUIが物語の結果を変えていないか調べる。

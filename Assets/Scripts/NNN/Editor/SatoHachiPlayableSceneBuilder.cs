@@ -121,6 +121,7 @@ namespace NNN.Editor
         {
             var root = new GameObject(name); var actor = root.AddComponent<CharacterActorView>();
             actor.Visual = new GameObject("Replaceable Visual").transform; actor.Visual.SetParent(root.transform, false);
+            if (cat) { CatSpriteSceneSetup.Attach(actor); return actor; }
             Shape(actor.Visual, "Body", cat ? PrimitiveType.Sphere : PrimitiveType.Capsule, new Vector3(0, cat ? .36f : .85f, 0), cat ? new Vector3(.9f, .55f, .5f) : new Vector3(.65f, .65f, .5f), color);
             actor.Head = Shape(actor.Visual, "Head", PrimitiveType.Sphere, new Vector3(0, cat ? .69f : 1.65f, -.08f), Vector3.one * (cat ? .56f : .48f), cat ? color : light);
             Shape(actor.Head, "EyeL", PrimitiveType.Sphere, new Vector3(-.22f, .08f, -.43f), new Vector3(.14f, .2f, .1f), dark);
